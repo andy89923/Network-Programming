@@ -1,3 +1,10 @@
+# MAC
+*.DS_Store
+.DS_Store
+
+# Docker 
+.data/*
+
 # Prerequisites
 *.d
 
