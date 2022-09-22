@@ -3,7 +3,8 @@
 .DS_Store
 
 # Docker 
-*.data/*
+*/.cache/
+*/.ssh/
 
 # Prerequisites
 *.d

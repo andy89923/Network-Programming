@@ -51,3 +51,18 @@ tmux
 ls
 tmux ls
 exit
+tmux ls
+tmux
+tmux ls
+tmux attach
+exit
+clear
+tmux attach
+exit
+whoami
+s
+exit
+tmux ls
+exit
+ls
+exit
