@@ -1,0 +1,20 @@
+TTL = 180, TOS = 184
+TCP 140.113.213.213:scp_config > 172.18.14.221:56598 A
+Error on Incorrect padding
+
+
+TTL = 180, TOS = 184
+TCP 140.113.213.213:scp_config > 172.18.14.221:56598 A
+Error on 'utf-8' codec can't decode byte 0xf3 in position 0: invalid continuation byte
+
+
+TTL = 180, TOS = 184
+TCP 140.113.213.213:scp_config > 172.18.14.221:56598 PA
+Error on 'utf-8' codec can't decode byte 0xba in position 0: invalid start byte
+
+
+TTL = 177, TOS = 184
+TCP 140.113.213.213:scp_config > 172.18.14.221:56599 PA
+a2ec8a8 2022/09/22 04:25:10 FLAG{1663820710.523747_simPl3_P@cK3t_anaLY5i5!} 207331406718417532135930728617328854231284623476774952283
+
+
