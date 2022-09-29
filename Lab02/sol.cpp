@@ -125,7 +125,7 @@ int main(int argc, char const *argv[]) {
 		cout << hex << __builtin_bswap64(checksum) << '\n' << filees[i].check_sum << "\n\n";
 
 		if (__builtin_bswap64(checksum) == filees[i].check_sum) {
-			string now_file_name = targ_path + file_names[i];
+			string now_file_name = targ_path + '/' + file_names[i];
 
 			ofstream now_file(now_file_name);
 
