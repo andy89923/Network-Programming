@@ -5,6 +5,7 @@
 # Docker 
 */.cache/
 */.ssh/
+*.data/*
 
 # Prerequisites
 *.d
