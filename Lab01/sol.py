@@ -1,3 +1,5 @@
+#!/usr/local/bin/python3
+
 import sys
 from scapy.all import *
 import codecs
