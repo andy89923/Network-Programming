@@ -37,26 +37,17 @@ int main(int argc, char const *argv[]) {
 	const char* pako_file_name = argv[1];
 	const char* targ_path = argv[2];
 
-	// char* pako_file_name = "example.pak";
+	cout << "PAKO file = " << pako_file_name << "";
 
-	cout << "Now file = " << pako_file_name << '\n';
-
-	int file;
-	if (pako_file_name == "")
-		file = open("example.pak", ios::in);
-	else
-		file = open(pako_file_name, ios::in);
-
+	int file = open(pako_file_name, ios::in);
 	if (file < 0) {
-		cout << "Error!\n";
+		cout << "Error on Open File!\n";
 		return 0;
 	}
 
-	int file_poi = 0;
 
 	char *header_p = (char*) &header;
 	read(file, header_p, sizeof(header_s));
-	file_poi += sizeof(header_s);
 
 	cout << "Number of files: " << header.num_files << '\n';
 
@@ -66,10 +57,8 @@ int main(int argc, char const *argv[]) {
 		char* buf = (char*) &filees[i];
 
 		read(file, buf, sizeof(file_e));
-		file_poi += sizeof(file_e);
 
 		filees[i].file_siz = ntohl(filees[i].file_siz);
-
 		filees[i].check_sum = __builtin_bswap64(filees[i].check_sum);
 	}
 
@@ -84,11 +73,11 @@ int main(int argc, char const *argv[]) {
 		while (c[0] != 0x00) {
 			now += c;
 			read(file, c, 1);
-			file_poi += 1;
 		}
-		cout << "File " << i + 1 << ": " << now << ", Size(byte) = " << filees[i].file_siz<< '\n';
-
 		file_names[i] = now;
+
+
+		cout << "File " << i + 1 << ": " << now << ", Size(byte) = " << filees[i].file_siz<< '\n';
 	}
 	cout << "--------------------------\n";
 
@@ -107,7 +96,6 @@ int main(int argc, char const *argv[]) {
 
 			if (j != 0 && j % 8 == 7) {
 				checksum = checksum ^ now;
-				// cout << hex << _OSSwapInt64(now) << ' ';
 				now = 0;
 			}
 
@@ -118,19 +106,16 @@ int main(int argc, char const *argv[]) {
 				now <<= 8;	
 			}
 		}
-
-		// cout << hex << _OSSwapInt64(now) << '\n';
 		checksum = checksum ^ now;
 
-		cout << hex << __builtin_bswap64(checksum) << '\n' << filees[i].check_sum << "\n\n";
+		// Check checksum
+		// cout << hex << __builtin_bswap64(checksum) << '\n' << filees[i].check_sum << "\n\n";
 
 		if (__builtin_bswap64(checksum) == filees[i].check_sum) {
-			string now_file_name = targ_path + '/' + file_names[i];
+			string now_file_name = (string) targ_path + '/' + file_names[i];
 
 			ofstream now_file(now_file_name);
-
 			now_file << context;
-
 			now_file.close();
 
 			cout << file_names[i] << " -> pass checksum\n\n";
