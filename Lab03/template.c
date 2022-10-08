@@ -16,7 +16,6 @@ void handler(int s) {
 	double t0, t1;
 	gettimeofday(&_t1, NULL);
 	t0 = tv2s(&_t0);
-	
 	t1 = tv2s(&_t1);
 	fprintf(stderr, "\n%lu.%06lu %llu bytes sent in %.6fs (%.6f Mbps; %.6f MBps)\n",
 		_t1.tv_sec, _t1.tv_usec, bytesent, t1-t0, 8.0*(bytesent/1000000.0)/(t1-t0), (bytesent/1000000.0)/(t1-t0));
@@ -29,13 +28,8 @@ int main(int argc, char *argv[]) {
 	signal(SIGTERM, handler);
 
 	gettimeofday(&_t0, NULL);
-
-	int i = 0;
 	while(1) {
 		struct timespec t = { 0, 1 };
-
-		printf("Sent %d\n", i++);
-
 		nanosleep(&t, NULL);
 	}
 
