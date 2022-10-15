@@ -6,7 +6,6 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <errno.h>
-#include <unistd.h>
 using namespace std;
 #define MAXARG 80
    
@@ -62,10 +61,10 @@ int main(int argc, char const *argv[]) {
         exit(1);
     }
 
-    struct sockaddr_in server_id, cliend_id;
+    struct sockaddr_in server_id, client_id;
 
 	bzero(&server_id, sizeof(server_id));
-	bzero(&cliend_id, sizeof(cliend_id));
+	bzero(&client_id, sizeof(client_id));
 
 	server_id.sin_family = PF_INET;
 	server_id.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -85,7 +84,7 @@ int main(int argc, char const *argv[]) {
 	char* cli_ip;
 
 	while (true) {
-		if ((connect_fd = accept(sock_fd, (sockaddr*) &cliend_id, (socklen_t*) &childer_len)) < 0) {
+		if ((connect_fd = accept(sock_fd, (sockaddr*) &client_id, (socklen_t*) &childer_len)) < 0) {
 			if (errno == EINTR) continue;
 			else {
 				cout << "Connect error!\n";
@@ -93,11 +92,8 @@ int main(int argc, char const *argv[]) {
 			}
 		}
 
-		cli_ip = inet_ntoa(cliend_id.sin_addr);
-		cli_port = ntohs(cliend_id.sin_port); 
-
-		cli_ip = inet_ntoa(cliend_id.sin_addr);
-		cli_port = ntohs(cliend_id.sin_port); 
+		cli_ip = inet_ntoa(client_id.sin_addr);
+		cli_port = ntohs(client_id.sin_port); 
 		
 		cout << "New connection from " << cli_ip;
 		cout << ":" << cli_port << "\n";
