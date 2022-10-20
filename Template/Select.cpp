@@ -80,15 +80,14 @@ int main(int argc, char* argv[]) {
 			connect_fd = accept(sock, (sockaddr*) &client_id, (socklen_t*) &info_len);
 
 			for (int i = 0; i < FD_SETSIZE; i++) {
-				if (i == FD_SETSIZE) {
-					perror("Too many clients\n");
-					exit(1);
-				}
-
 				if (clients[i] < 0) {
 					clients[i] = connect_fd;
 					max_po = max(max_po, i);
 					break;
+				}
+				if (i == FD_SETSIZE - 1) {
+					perror("Too many clients\n");
+					exit(1);
 				}
 			}
 
