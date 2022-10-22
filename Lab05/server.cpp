@@ -301,7 +301,9 @@ int main(int argc, char* argv[]) {
 					else {
 						// 2022-10-05 16:13:40 *** Unknown or incomplete command </name>
 						string ss = get_time_str();
-						ss += " *** Unknown or incomplete command </name>\n";
+						string cd = buf;
+
+						ss += " *** Unknown or incomplete command <" + cd + ">\n";
 
 						char const *pchar = ss.c_str(); 
 						send(clients[i].fd_num, pchar, ss.length(), 0);
