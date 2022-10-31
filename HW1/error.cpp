@@ -1,8 +1,12 @@
 #include <map>
 #include <iostream>
+#include <cstring>
+#include <sys/socket.h>
 using namespace std;
 
 #include "IRCError.h"
+#include "User.h"
+#include "Handler.h"
 
 map<string, int> IRCERROR::error_code;
 
@@ -11,9 +15,19 @@ void IRCERROR::init_error() {
 	init_error_4();
 }
 
-void IRCERROR::sent_error(string type) {
-	cerr << error_code[type] << '\n';
+void IRCERROR::sent_error(string type, User client) {
+	cerr << "ERROR " << type << '\n';
 
+	int code = error_code[type];
+	string ss = server_constants::SERVER_PREFIX;
+
+	ss += to_string(code);
+	ss += "\n";
+
+
+	// send
+	char const *pchar = ss.c_str(); 
+	send(client.getFD(), pchar, ss.length(), 0);
 	
 }
 /*

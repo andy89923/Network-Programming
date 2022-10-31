@@ -3,6 +3,7 @@
 
 #include <map>
 #include <string>
+#include "User.h"
 using namespace std;
 
 
@@ -17,7 +18,7 @@ public:
 	static void init_error_3();
 	static void init_error_4();
 
-	static void sent_error(string type);
+	static void sent_error(string type, User who);
 };
 
 

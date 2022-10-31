@@ -1,6 +1,6 @@
 CPP=g++-7
 CPP_FLAG=-std=c++17
-SOURCE=server.cpp error.cpp
+SOURCE=server.cpp error.cpp user.cpp handler.cpp
 TEMPLATE_PATH=template
 
 TEST_PROG=server

@@ -10,8 +10,11 @@
 using namespace std;
 
 #include "IRCError.h"
+#include "User.h"
+#include "Handler.h"
 
 #define BUFSIZE 10000
+#define MAXARG 1010
 #define MAXCONN 1010
 
 char buf[BUFSIZE];
@@ -23,8 +26,12 @@ void tcp_socket(int& sock, sockaddr_in& server_id, int port) {
         cout << "Error on socket init!\n";
         exit(1);
     }
-    bzero(&server_id, sizeof(server_id));
+    const int opt = true;
+    socklen_t optlen = sizeof(opt);
+    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &opt, optlen);
+    setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, &opt, optlen);
 
+    bzero(&server_id, sizeof(server_id));
 	server_id.sin_family = PF_INET;
 	server_id.sin_addr.s_addr = htonl(INADDR_ANY);
 	server_id.sin_port = htons(port);
@@ -34,10 +41,12 @@ void tcp_socket(int& sock, sockaddr_in& server_id, int port) {
 		cout << "Error on bind!\n";
 		exit(1);
 	}
+
 	r = listen(sock, MAXCONN);
 }
 
-int clients[MAXCONN];
+User clients[MAXCONN];
+int num_clients;
 int max_fd, max_po;
 fd_set rcv_set, all_set;
 
@@ -48,7 +57,9 @@ void select_init(int &socket) {
 	max_fd = socket;
 	max_po = -1;
 
-	for (int i = 0; i < MAXCONN; i++) clients[i] = -1;
+	for (int i = 0; i < MAXCONN; i++) {
+		clients[i].init();
+	}
 
 	FD_SET(socket, &all_set);
 }
@@ -57,6 +68,7 @@ void server_init(int &sock) {
 	IRCERROR::init_error();
 
 	select_init(sock);
+	num_clients = 0;
 }
 
 int main(int argc, char* argv[]) {
@@ -83,9 +95,19 @@ int main(int argc, char* argv[]) {
 			connect_fd = accept(sock, (sockaddr*) &client_id, (socklen_t*) &info_len);
 
 			for (int i = 0; i < FD_SETSIZE; i++) {
-				if (clients[i] < 0) {
-					clients[i] = connect_fd;
+				if (clients[i].getFD() < 0) {
 					max_po = max(max_po, i);
+
+					clients[i].setFD(connect_fd);
+					clients[i].setIP(client_id.sin_addr);
+					clients[i].setPort(ntohs(client_id.sin_port));
+					clients[i].setName(to_string(rand()));
+
+					num_clients += 1;
+
+					// connection
+					cout << "Connect!\n";
+
 					break;
 				}
 				if (i == FD_SETSIZE - 1) {
@@ -101,22 +123,41 @@ int main(int argc, char* argv[]) {
 			if (num_ready <= 0) continue;
 		}
 
-		int now_sock;
+		int now_sock, disconnect = 0;
 		for (int i = 0; i <= max_po; i++) {
-			if ((now_sock = clients[i]) < 0) continue;
+			if ((now_sock = clients[i].getFD()) < 0) continue;
 
 			if (FD_ISSET(now_sock, &rcv_set)) {
 				int read_len = read(now_sock, buf, BUFSIZE);
 				if (read_len == 0) {
 					close(now_sock);
 					FD_CLR(now_sock, &all_set);
-					clients[i] = -1;
+					
+					clients[i].init();
+
+					num_clients -= 1;
+					disconnect = 1;
 				}
 
 				// buf
 				// do something here
+				if (!disconnect) {
+					char s[] = " \n";
+					char* recv[MAXARG];
 
+					int cnt = 0;
 
+					char *token;
+					token = strtok(buf, s);
+
+					while (token != NULL) {
+						recv[cnt++] = token;
+						token = strtok(NULL, s);
+					}
+					Handler::handle(recv, clients[i], cnt);
+				}
+
+				memset(buf, 0, sizeof(buf));
 
 				num_ready -= 1;
 				if (num_ready <= 0) break;
