@@ -1,0 +1,3 @@
+#define BUFSIZE 10000
+#define MAXARG 1010
+#define MAXCONN 1010

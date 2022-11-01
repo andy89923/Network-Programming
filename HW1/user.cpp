@@ -1,5 +1,6 @@
 #include "User.h"
 #include "Handler.h"
+#include "Global.h"
 
 #include <arpa/inet.h>
 #include <sys/socket.h>
@@ -8,6 +9,7 @@
 using namespace std;
 
 int num_clients;
+User clients[MAXCONN];
 
 User::User() {
 	this -> fd_num = -1;
@@ -58,17 +60,17 @@ void User::welcome_message() {
 	string now = "";
 	string name = this -> name;
 
-	now += Handler::getDataFormat(001, name) + "Welcome to the minimized IRC daemon!\n";
-	now += Handler::getDataFormat(251, name) + "There are " + to_string(num_clients);
+	now += Handler::getDataFormat(001, name) + ":Welcome to the minimized IRC daemon!\n";
+	now += Handler::getDataFormat(251, name) + ":There are " + to_string(num_clients);
 	now += " users and 0 invisible on 1 server\n";
 
 	string tmp = Handler::getDataFormat(372, name);
 
-	now += Handler::getDataFormat(375, name) + "- mircd Message of the day -\n";
-	now += tmp                               + "-              \n";
-	now += tmp                               + "-  Hello World!\n";
-	now += tmp                               + "-              \n";
-	now += Handler::getDataFormat(376, name) + "End of message of the day\n";
+	now += Handler::getDataFormat(375, name) + ":- mircd Message of the day -\n";
+	now += tmp                               + ":-              \n";
+	now += tmp                               + ":-  Hello World!\n";
+	now += tmp                               + ":-              \n";
+	now += Handler::getDataFormat(376, name) + ":End of message of the day\n";
 
 	// send
 	char const *pchar = now.c_str(); 
@@ -81,4 +83,4 @@ int  User::getFD()     const { return this -> fd_num;          }
 bool User::isRegist()  const { return this -> registered >= 5; }
 bool User::isUsed()    const { return this -> fd_num > 0;      }
 string User::getName() const { return this -> name;            }
-
+in_addr User::getIP()  const { return this -> ip;              }

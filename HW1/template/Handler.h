@@ -10,6 +10,7 @@ protected:
 
 	static int set_user_info(char**, User&, int);
 	static int change_user_name(char**, User&, int);
+	static void list_users(User&);
 
 public:
 

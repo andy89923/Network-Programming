@@ -8,12 +8,12 @@ using namespace std;
 #include "User.h"
 #include "IRCError.h"
 
-// :<servername> <code> <user_nick> :
+// ":<servername> <code> <user_nick> "
 string Handler::getDataFormat(int code, string name) {
 	stringstream ss;
 	ss << server_constants::SERVER_PREFIX;
-	ss << std::setw(3) << setfill('0') << code;
-	ss << ' ' << name << " :";
+	ss << setw(3) << setfill('0') << code;
+	ss << ' ' << name << " ";
 	return ss.str();
 }
 
@@ -44,8 +44,28 @@ int Handler::change_user_name(char** rec, User& client, int cnt) {
 	return 0;
 }
 
+void Handler::list_users(User& client) {
+	stringstream ss;
 
+	ss << Handler::getDataFormat(392, client.getName());
+	ss << ":UserID                         Terminal  Host\n";
 
+	string tmp = Handler::getDataFormat(393, client.getName());
+	for (auto i : clients) {
+		if (!i.isUsed()) continue;
+		ss << tmp << ":";
+
+		ss << setw(31) << left << setfill(' ') << i.getName();
+		ss << setw(10) << left << setfill(' ') << "-";
+		ss << inet_ntoa(i.getIP()) << "\n";
+	}
+	ss << Handler::getDataFormat(394, client.getName());
+	ss << ":End of users\n";
+
+	string now = ss.str();
+	char const *pchar = now.c_str(); 
+	send(client.getFD(), pchar, now.length(), 0);
+}
 
 
 
@@ -60,15 +80,15 @@ void Handler::handle(char** rec, User& client, int cnt) {
 	}
 
 	// Cheak whether user register or not
-	if (!client.isRegist()) {
-		IRCERROR::sent_error("ERR_NOTREGISTERED", client);
-		return;
-	}
+	// if (!client.isRegist()) {
+	// 	IRCERROR::sent_error("ERR_NOTREGISTERED", client);
+	// 	return;
+	// }
 
 
 	if (strcmp(rec[0], "USERS") == 0) {
 		cerr << "USERS command found!\n";
-		
+		Handler::list_users(client);
 		return;
 	}
 

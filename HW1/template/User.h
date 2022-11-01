@@ -3,10 +3,9 @@
 
 #include <arpa/inet.h>
 #include <string>
-
 using namespace std;
 
-extern int num_clients;
+#include "Global.h"
 
 class User {
 protected:
@@ -38,8 +37,10 @@ public:
 	bool isRegist() const;
 	string getName() const;
 	int getFD() const;
+	in_addr getIP() const;
 };
 
-
+extern int num_clients; 
+extern User clients[MAXCONN];
 
 #endif // User_H_INCLUDED

@@ -12,10 +12,7 @@ using namespace std;
 #include "IRCError.h"
 #include "User.h"
 #include "Handler.h"
-
-#define BUFSIZE 10000
-#define MAXARG 1010
-#define MAXCONN 1010
+#include "Global.h"
 
 char buf[BUFSIZE];
 
@@ -45,7 +42,6 @@ void tcp_socket(int& sock, sockaddr_in& server_id, int port) {
 	r = listen(sock, MAXCONN);
 }
 
-User clients[MAXCONN];
 int max_fd, max_po;
 fd_set rcv_set, all_set;
 
@@ -104,7 +100,7 @@ int main(int argc, char* argv[]) {
 					num_clients += 1;
 
 					// connection
-					cout << "Connect!\n";
+					cout << "Connect! " << inet_ntoa(clients[i].getIP()) << '\n';
 
 					break;
 				}
