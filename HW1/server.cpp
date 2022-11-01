@@ -46,7 +46,6 @@ void tcp_socket(int& sock, sockaddr_in& server_id, int port) {
 }
 
 User clients[MAXCONN];
-int num_clients;
 int max_fd, max_po;
 fd_set rcv_set, all_set;
 
@@ -101,7 +100,6 @@ int main(int argc, char* argv[]) {
 					clients[i].setFD(connect_fd);
 					clients[i].setIP(client_id.sin_addr);
 					clients[i].setPort(ntohs(client_id.sin_port));
-					clients[i].setName(to_string(rand()));
 
 					num_clients += 1;
 

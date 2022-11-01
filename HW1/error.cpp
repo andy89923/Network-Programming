@@ -9,10 +9,16 @@ using namespace std;
 #include "Handler.h"
 
 map<string, int> IRCERROR::error_code;
+map<int, string> IRCERROR::error_info;
 
 void IRCERROR::init_error() {
 	init_error_3();
 	init_error_4();
+	init_error_info();
+}
+
+void IRCERROR::init_error_info() {
+	error_info[451] = " :You have not registered";
 }
 
 void IRCERROR::sent_error(string type, User client) {
@@ -21,37 +27,15 @@ void IRCERROR::sent_error(string type, User client) {
 	int code = error_code[type];
 	string ss = server_constants::SERVER_PREFIX;
 
-	ss += to_string(code);
+	ss += to_string(code) + error_info[code];
 	ss += "\n";
-
 
 	// send
 	char const *pchar = ss.c_str(); 
 	send(client.getFD(), pchar, ss.length(), 0);
-	
 }
-/*
-/*
-(321) RPL_LISTSTART
-(322) RPL_LIST
 
-(323) RPL_LISTEND
-(331) RPL_NOTOPIC
 
-(332) RPL_TOPIC
-(353) RPL_NAMREPLY
-
-(366) RPL_ENDOFNAMES
-(372) RPL_MOTD
-
-(375) RPL_MOTDSTART
-(376) RPL_ENDOFMOTD
-
-(392) RPL_USERSSTART
-(393) RPL_USERS
-
-(394) RPL_ENDOFUSERS
-*/
 void IRCERROR::init_error_3() {
 	error_code["RPL_LISTSTART"]  = 321;
 	error_code["RPL_LIST"]       = 322;
@@ -74,22 +58,6 @@ void IRCERROR::init_error_3() {
 	error_code["RPL_ENDOFUSERS"] = 394;
 }
 
-/*
-(401) ERR_NOSUCHNICK
-(403) ERR_NOSUCHCHANNEL
-
-(411) ERR_NORECIPIENT
-(412) ERR_NOTEXTTOSEND
-
-(421) ERR_UNKNOWNCOMMAND
-(431) ERR_NONICKNAMEGIVEN
-
-(436) ERR_NICKCOLLISION
-(442) ERR_NOTONCHANNEL
-
-(451) ERR_NOTREGISTERED
-(461) ERR_NEEDMOREPARAMS
-*/
 void IRCERROR::init_error_4() {
 	error_code["ERR_NOSUCHNICK"]      = 401;
 	error_code["ERR_NOSUCHCHANNEL"]   = 403;

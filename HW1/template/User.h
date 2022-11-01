@@ -6,13 +6,19 @@
 
 using namespace std;
 
+extern int num_clients;
+
 class User {
 protected:
 	int fd_num;
 	int port;
 
 	in_addr ip;
-	std::string name;
+	string name;  // Nickname
+
+	string username, hostname, servername, realname;
+
+	int registered;
 
 public:
 	User();
@@ -24,8 +30,12 @@ public:
 	void setFD(int);
 	void setName(string);
 
+	void setUser(string, string, string, string);
+
+	void welcome_message();
 
 	bool isUsed() const;
+	bool isRegist() const;
 	string getName() const;
 	int getFD() const;
 };
