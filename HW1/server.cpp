@@ -64,6 +64,7 @@ void server_init(int &sock) {
 
 	select_init(sock);
 	num_clients = 0;
+	all_user_name.clear();
 }
 
 int main(int argc, char* argv[]) {

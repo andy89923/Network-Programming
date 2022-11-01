@@ -2,6 +2,7 @@
 #include <iostream>
 #include <sstream>
 #include <iomanip>
+#include <set>
 using namespace std;
 
 #include "Handler.h"
@@ -32,7 +33,6 @@ int Handler::set_user_info(char** rec, User& client, int cnt) {
 //    Parameters: <nickname> [ <hopcount> ]
 int Handler::change_user_name(char** rec, User& client, int cnt) {
 	if (cnt < 2) {
-		// "ERR_NONICKNAMEGIVEN"
 		IRCERROR::sent_error("ERR_NONICKNAMEGIVEN", client);	
 		return 1;
 	}
@@ -41,6 +41,11 @@ int Handler::change_user_name(char** rec, User& client, int cnt) {
 		return 1;
 	}
 	client.setName(rec[1]);
+	if (all_user_name.find(rec[1]) != all_user_name.end()) {
+		IRCERROR::sent_error("ERR_NICKCOLLISION", client);	
+		return 1;
+	}
+	all_user_name.insert(rec[1]);
 	return 0;
 }
 
@@ -85,12 +90,12 @@ void Handler::handle(char** rec, User& client, int cnt) {
 	// 	return;
 	// }
 
-
 	if (strcmp(rec[0], "USERS") == 0) {
-		cerr << "USERS command found!\n";
 		Handler::list_users(client);
 		return;
 	}
+
+
 
 
 	// Command not found

@@ -6,16 +6,22 @@
 #include <sys/socket.h>
 #include <string>
 #include <iostream>
+#include <set>
 using namespace std;
 
 int num_clients;
 User clients[MAXCONN];
+set<string> all_user_name;
 
 User::User() {
 	this -> fd_num = -1;
 }
 
 void User::init() {
+	if (this -> name != "" && 
+		all_user_name.find(this -> name) != all_user_name.end()) 
+		all_user_name.erase(this -> name);
+
 	this -> fd_num = -1;
 	this -> name = "";
 	this -> registered = 0;
@@ -36,8 +42,9 @@ void User::setFD(int fd_num) {
 // Nickname
 void User::setName(string name) {
 	this -> name = name;
+	if (all_user_name.find(name) != all_user_name.end()) return;
+	
 	this -> registered |= 1;
-
 	if (this -> registered == 3) this -> welcome_message();
 }
 

@@ -3,6 +3,7 @@
 
 #include <arpa/inet.h>
 #include <string>
+#include <set>
 using namespace std;
 
 #include "Global.h"
@@ -42,5 +43,6 @@ public:
 
 extern int num_clients; 
 extern User clients[MAXCONN];
+extern set<string> all_user_name;
 
 #endif // User_H_INCLUDED
