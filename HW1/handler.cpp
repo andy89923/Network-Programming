@@ -23,6 +23,7 @@ string Handler::getDataFormat(int code, string name) {
 int Handler::set_user_info(char** rec, User& client, int cnt) {
 	if (cnt < 5 || cnt > 5) {
 		cerr << "USER command error!\n";
+		IRCERROR::sent_error("ERR_NEEDMOREPARAMS", client);
 		return 1;
 	}
 
@@ -36,8 +37,7 @@ int Handler::change_user_name(char** rec, User& client, int cnt) {
 		IRCERROR::sent_error("ERR_NONICKNAMEGIVEN", client);	
 		return 1;
 	}
-	if (cnt > 2) {
-		// Name contaion white space
+	if (cnt > 2) { // Name contaion white space
 		return 1;
 	}
 	client.setName(rec[1]);
@@ -53,7 +53,9 @@ void Handler::list_users(User& client) {
 	stringstream ss;
 
 	ss << Handler::getDataFormat(392, client.getName());
-	ss << ":UserID                         Terminal  Host\n";
+	ss << ":";
+	ss << setw(31) << left << "UserID";
+	ss << "Terminal  Host\n";
 
 	string tmp = Handler::getDataFormat(393, client.getName());
 	for (auto i : clients) {
@@ -90,6 +92,12 @@ void Handler::handle(char** rec, User& client, int cnt) {
 	// 	return;
 	// }
 
+	if (strcmp(rec[0], "PING") == 0) { // Pong
+		string now = "PONG <null>\n";
+		char const *pchar = now.c_str(); 
+		send(client.getFD(), pchar, now.length(), 0);
+		return;
+	}
 	if (strcmp(rec[0], "USERS") == 0) {
 		Handler::list_users(client);
 		return;

@@ -137,7 +137,7 @@ int main(int argc, char* argv[]) {
 				// buf
 				// do something here
 				if (!disconnect) {
-					char s[] = " \n";
+					char s[] = " \n\r";
 					char* recv[MAXARG];
 
 					int cnt = 0;

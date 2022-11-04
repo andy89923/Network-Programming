@@ -20,6 +20,7 @@ void IRCERROR::init_error() {
 void IRCERROR::init_error_info() {
 	error_info[451] = " :You have not registered";
 	error_info[436] = " :Nickname collision KILL";
+	error_info[461] = " :Not enought parameters";
 }
 
 void IRCERROR::sent_error(string type, User client) {
