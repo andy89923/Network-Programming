@@ -80,10 +80,37 @@ void User::welcome_message() {
 
 	string tmp = Handler::getDataFormat(372, name);
 
-	now += Handler::getDataFormat(375, name) + ":- mircd Message of the day -\n";
-	now += tmp                               + ":-              \n";
-	now += tmp                               + ":-  Hello World!\n";
-	now += tmp                               + ":-              \n";
+	now += Handler::getDataFormat(375, name) + ":- mircd Message of the day -  \n";
+	now += tmp                               + ":-                             \n";
+	now += tmp                               + ":-  ░░░▐▀▀▄█▀▀▀▀▀▒▄▒▀▌░░░░     \n";
+	now += tmp                               + ":-  ░░░▐▒█▀▒▒▒▒▒▒▒▒▀█░░░░░     \n";
+	now += tmp                               + ":-  ░░░░█▒▒▒▒▒▒▒▒▒▒▒▀▌░░░░     \n";
+	now += tmp                               + ":-  ░░░░▌▒██▒▒▒▒██▒▒▒▐░░░░     \n";
+	now += tmp                               + ":-  ░░░░▌▒▒▄▒██▒▄▄▒▒▒▐░░░░     \n";
+	now += tmp                               + ":-  ░░░▐▒▒▒▀▄█▀█▄▀▒▒▒▒█▄░░     \n";
+	now += tmp                               + ":-  ░░░▀█▄▒▒▐▐▄▌▌▒▒▄▐▄▐░░░     \n";
+	now += tmp                               + ":-  ░░▄▀▒▒▄▒▒▀▀▀▒▒▒▒▀▒▀▄░░     \n";
+	now += tmp                               + ":-  ░░█▒▀█▀▌▒▒▒▒▒▄▄▄▐▒▒▐░░     \n";
+	now += tmp                               + ":-  ░░░▀▄▄▌▌▒▒▒▒▐▒▒▒▀▒▒▐░░     \n";
+	now += tmp                               + ":-  ░░░░░░░▐▌▒▒▒▒▀▄▄▄▄▄▀░░     \n";
+	now += tmp                               + ":-  ░░░░░░░░▐▄▒▒▒▒▒▒▒▒▐░░░     \n";
+	now += tmp                               + ":-  ░░░░░░░░▌▒▒▒▒▄▄▒▒▒▐░░░     \n";
+
+	now += tmp                               + ":-                              \n";
+	now += tmp                               + ":-                              \n";
+
+	now += tmp                               + ":-  ░░░░░░░░▄░░░░░░░░░░░░░░▄    \n";
+	now += tmp                               + ":-  ░░░░░░░░▌▒█░░░░░░░░░░░▄▀▒▌  \n";
+	now += tmp                               + ":-  ░░░░░░░░▌▒▒█░░░░░░░░▄▀▒▒▒▐  \n";
+	now += tmp                               + ":-  ░░░░░░░▐▄▀▒▒▀▀▀▀▄▄▄▀▒▒▒▒▒▐  \n";
+	now += tmp                               + ":-  ░░░░░▄▄▀▒░▒▒▒▒▒▒▒▒▒█▒▒▄█▒▐  \n";
+	now += tmp                               + ":-  ░░░▄▀▒▒▒░░░▒▒▒░░░▒▒▒▀██▀▒▌  \n";
+	now += tmp                               + ":-  ░░▐▒▒▒▄▄▒▒▒▒░░░▒▒▒▒▒▒▒▀▄▒▒▌ \n";
+	now += tmp                               + ":-  ░░▌░░▌█▀▒▒▒▒▒▄▀█▄▒▒▒▒▒▒▒█▒▐ \n";
+	now += tmp                               + ":-  ░▐░░░▒▒▒▒▒▒▒▒▌██▀▒▒░░░▒▒▒▀▄▌\n";
+	now += tmp                               + ":-  ░▌░▒▄██▄▒▒▒▒▒▒▒▒▒░░░░░░▒▒▒▒▌\n";
+	now += tmp                               + ":-  ▀▒▀▐▄█▄█▌▄░▀▒▒░░░░░░░░░░▒▒▒ \n";
+	now += tmp                               + ":-                              \n";
 	now += Handler::getDataFormat(376, name) + ":End of message of the day\n";
 
 	// send
@@ -99,4 +126,5 @@ bool User::inChat()    const { return this -> cha_name == "";  }
 bool User::isRegist()  const { return this -> registered >= 5; }
 bool User::isUsed()    const { return this -> fd_num > 0;      }
 string User::getName() const { return this -> name;            }
+string User::getChat() const { return this -> cha_name;        }
 in_addr User::getIP()  const { return this -> ip;              }

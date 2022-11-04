@@ -41,6 +41,7 @@ public:
 	bool isUsed() const;
 	bool isRegist() const;
 	string getName() const;
+	string getChat() const;
 	int getFD() const;
 	in_addr getIP() const;
 };

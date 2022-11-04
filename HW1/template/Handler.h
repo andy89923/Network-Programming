@@ -13,6 +13,10 @@ protected:
 	static void list_users(User&);
 	static void list_channel(User&);
 	static void join_channel(char**, User&, int);
+	static void setTopic(char**, User&, int);
+	static void list_channel_users(char**, User&, int);
+	static void leave_channel(char**, User&, int);
+	static void send_message(char**, User&, int);
 
 public:
 

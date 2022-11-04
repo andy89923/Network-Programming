@@ -9,6 +9,7 @@ using namespace std;
 #include "User.h"
 #include "IRCError.h"
 #include "Channel.h"
+#include "Global.h"
 
 bool Handler::send_data(string s, User& client) {
 	char const *pchar = s.c_str(); 
@@ -24,8 +25,7 @@ string Handler::getDataFormat(int code, string name) {
 	return ss.str();
 }
 
-// Command: USER
-//    Parameters: <username> <hostname> <servername> <realname>
+// Command: USER <username> <hostname> <servername> <realname>
 int Handler::set_user_info(char** rec, User& client, int cnt) {
 	if (cnt < 5 || cnt > 5) {
 		cerr << "USER command error!\n";
@@ -36,16 +36,14 @@ int Handler::set_user_info(char** rec, User& client, int cnt) {
 	client.setUser(rec[1], rec[2], rec[3], rec[4]);
 }
 
-// Command: NICK
-//    Parameters: <nickname> [ <hopcount> ]
+// Command: NICK <nickname>
 int Handler::change_user_name(char** rec, User& client, int cnt) {
 	if (cnt < 2) {
 		IRCERROR::sent_error("ERR_NONICKNAMEGIVEN", client);	
 		return 1;
 	}
-	if (cnt > 2) { // Name contaion white space
-		return 1;
-	}
+	if (cnt > 2) { return 1; }
+
 	client.setName(rec[1]);
 	if (all_user_name.find(rec[1]) != all_user_name.end()) {
 		IRCERROR::sent_error("ERR_NICKCOLLISION", client);	
@@ -55,25 +53,73 @@ int Handler::change_user_name(char** rec, User& client, int cnt) {
 	return 0;
 }
 
+// Command: PART <Channel>
+void Handler::leave_channel(char** rec, User& client, int cnt) {
+	if (cnt < 2) {
+		IRCERROR::sent_error("ERR_NEEDMOREPARAMS", client);
+		return;
+	}
+	if (cnt > 2) { return; }
 
-// Command: JOIN
-//    Parameters: <channel>
+	string name = rec[1];
+	if (name[0] == '#') name.erase(name.begin());
+
+	if (channel_map.find(name) == channel_map.end()) {
+		IRCERROR::sent_error("ERR_NOSUCHCHANNEL", client);
+		return;
+	}
+
+	if (client.getChat() != name || client.getChat() == "") {
+		IRCERROR::sent_error("ERR_NOTONCHANNEL", client);
+		return;
+	}
+
+	int idx = channel_map[name];
+
+	channels[idx].pop_usr(client);
+	client.joinChat("");
+
+	stringstream ss;
+	ss << ":" << client.getName() << " PART :#" << name << '\n';
+	Handler::send_data(ss.str(), client);
+}
+
+// Command: JOIN <channel>
 void Handler::join_channel(char** rec, User& client, int cnt) {
 	if (cnt < 2) {
 		IRCERROR::sent_error("ERR_NEEDMOREPARAMS", client);
 		return;
 	}
-	if (cnt > 2) {
-		return;
-	}
+	if (cnt > 2) { return; }
+
 	string name = rec[1];
+	if (name[0] == '#') name.erase(name.begin());
+
 	if (channel_map.find(name) == channel_map.end()) {
-
-		// TODO
-
-		return;
+		for (int i = 0; i < MAXCONN; i++) if (!channels[i].isUsed()) {
+			channels[i].clear();
+			channels[i].setName(name);
+			channel_map[name] = i;
+			break;
+		}
+		
 	}
+	int idx = channel_map[name];
 
+	channels[idx].push_usr(client);
+	client.joinChat(name);
+
+	stringstream ss;
+
+	ss << ":" << client.getName() << " JOIN #" << name << "\n";
+	ss << getDataFormat(331, client.getName()) << "#" << name << " :";
+	ss << channels[idx].getTopic() << '\n';
+	ss << getDataFormat(353, client.getName()) << "#" << name << " :";
+	ss << channels[idx].getUsers() << '\n';
+	ss << getDataFormat(366, client.getName()) << "#" << name << " :";
+	ss << "End of Names List\n";
+
+	Handler::send_data(ss.str(), client);
 }
 
 // Command: USERS
@@ -102,8 +148,6 @@ void Handler::list_users(User& client) {
 }
 
 // Command: LIST
-// :mircd 321 test23 Channel :Users Name
-// :mircd 323 test23 :End of Liset
 void Handler::list_channel(User& client) {
 	stringstream ss;
 
@@ -121,6 +165,72 @@ void Handler::list_channel(User& client) {
 	ss << ":End of Liset\n";
 
 	Handler::send_data(ss.str(), client);
+}
+
+// Command: TOPIC <channel> [<topic>]
+void Handler::setTopic(char** rec, User& client, int cnt) {
+	if (cnt < 3) {
+		IRCERROR::sent_error("ERR_NEEDMOREPARAMS", client);
+		return;
+	}
+	string name = rec[1]; name.erase(name.begin());
+	if (client.getChat() != name || client.getChat() == "") {
+		IRCERROR::sent_error("ERR_NOTONCHANNEL", client);
+		return;
+	}
+	string topic = rec[2]; topic.erase(topic.begin());
+	for (int i = 3; i < cnt; i++) topic = topic + " " + rec[i];
+
+	int idx = channel_map[name];
+	channels[idx].setTopic(topic);
+
+	stringstream ss;
+	ss << server_constants::SERVER_PREFIX;
+	ss << " 332 " << client.getName() << " " << rec[1] << ":" << topic << '\n';
+
+	Handler::send_data(ss.str(), client);
+}
+
+// Command: NAMES [<channel>]
+void Handler::list_channel_users(char** rec, User& client, int cnt) {
+	stringstream ss;
+
+	for (int i = 0; i < MAXCONN; i++) if (channels[i].isUsed()) {
+		bool filter = (cnt <= 1);
+		
+		for (int j = 1; j < cnt; j++) {
+			string yy = rec[j];
+			if (yy[0] == '#') yy.erase(yy.begin());
+			if (channels[i].getName() == rec[j]) filter = true;
+		}
+		if (!filter) continue;
+
+		string name = channels[i].getName();
+		ss << getDataFormat(353, client.getName()) << "#" << name << " :";
+		ss << channels[i].getUsers() << '\n';
+		ss << getDataFormat(366, client.getName()) << "#" << name << " :";
+		ss << "End of Names List\n";
+	}
+	Handler::send_data(ss.str(), client);
+}
+
+// Command: PRIVMSG <channel> <message>
+void Handler::send_message(char** rec, User& client, int cnt) {
+	if (cnt < 3) {
+		IRCERROR::sent_error("ERR_NEEDMOREPARAMS", client);
+		return;
+	}
+	string name = rec[1]; name.erase(name.begin());
+	if (channel_map.find(name) == channel_map.end()) {
+		IRCERROR::sent_error("ERR_NOSUCHNICK", client);
+		return;
+	}
+	int idx = channel_map[name];
+
+	string message = rec[2];
+	for (int i = 3; i < cnt; i++) message = message + " " + rec[i];
+
+	channels[idx].send_message(client.getName(), message);
 }
 
 
@@ -148,10 +258,8 @@ void Handler::handle(char** rec, User& client, int cnt) {
 		Handler::list_users(client);
 		return;
 	}
-
 	if (strcmp(rec[0], "TOPIC") == 0) {
-		// User must in channel
-		// TOPIC #abc :This is Topic
+		Handler::setTopic(rec, client, cnt);
 		return;
 	}
 	if (strcmp(rec[0], "LIST") == 0) {
@@ -159,24 +267,24 @@ void Handler::handle(char** rec, User& client, int cnt) {
 		return;
 	}
 	if (strcmp(rec[0], "NAMES") == 0) {
+		Handler::list_channel_users(rec, client, cnt);
 		return;
 	}
 	if (strcmp(rec[0], "JOIN") == 0) {
- 		// :mircd 331 CCC #B :No topic is set
- 		// :mircd 353 CCC #B :<u> <u>
- 		// :mircd 366 CCC #B :End of Names List
+		Handler::join_channel(rec, client, cnt);
 		return;
 	}
 	if (strcmp(rec[0], "PART") == 0) {
+		Handler::leave_channel(rec, client, cnt);
 		return;
 	}
 	if (strcmp(rec[0], "PRIVMSG") == 0) {
+		Handler::send_message(rec, client, cnt);
 		return;
 	}
 
 
-	if (strcmp(rec[0], "QUIT") == 0) {
-		
+	if (strcmp(rec[0], "QUIT") == 0) {	
 		return;
 	}
 

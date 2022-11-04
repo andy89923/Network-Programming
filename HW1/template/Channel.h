@@ -28,10 +28,13 @@ public:
 	void push_usr(User&);
 	void pop_usr(User&);
 
+	void send_message(string, string);
+
 	bool isUsed() const;
 	int get_num_usr() const;
 	string getName() const;
 	string getTopic() const;
+	string getUsers() const;
 };
 
 extern map<string, int> channel_map;

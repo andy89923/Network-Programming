@@ -1,5 +1,8 @@
 #include <cstring>
 #include <map>
+#include <iostream>
+#include <sstream>
+#include <iomanip>
 using namespace std;
 
 
@@ -21,7 +24,7 @@ void Channel::clear() {
 }
 
 void Channel::setTopic(string topic) {
-	this -> topic = name;
+	this -> topic = topic;
 }
 
 void Channel::setName(string name) {
@@ -37,6 +40,16 @@ void Channel::pop_usr(User& client) {
 	this -> v.erase(v.find(&client));
 }
 
+void Channel::send_message(string source, string message) {
+	string s = ":" + source + " PRIVMSG #" + this -> name + " :";
+	s += message;
+
+	char const *pchar = s.c_str(); 
+	for (auto i : this -> v) if (i -> getName() != source) {
+		send(i -> getFD(), pchar, s.length(), 0);
+	}
+}
+
 bool Channel::isUsed() const {
 	return this -> used;
 }
@@ -45,12 +58,20 @@ int Channel::get_num_usr() const {
 	return (int) v.size();
 }
 
+string Channel::getUsers() const {
+	string s = "";
+	for (auto i : this -> v) {
+		s = s + (i -> getName()) + " ";
+	}
+	return s;
+}
+
 string Channel::getName() const {
 	return this -> name;
 }
 
 string Channel::getTopic() const {
+	if (this -> topic == "") 
+		return "No topic is set";
 	return this -> topic;
 }
-
-
