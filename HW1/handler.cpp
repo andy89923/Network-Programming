@@ -8,6 +8,12 @@ using namespace std;
 #include "Handler.h"
 #include "User.h"
 #include "IRCError.h"
+#include "Channel.h"
+
+bool Handler::send_data(string s, User& client) {
+	char const *pchar = s.c_str(); 
+	send(client.getFD(), pchar, s.length(), 0);
+}
 
 // ":<servername> <code> <user_nick> "
 string Handler::getDataFormat(int code, string name) {
@@ -49,13 +55,36 @@ int Handler::change_user_name(char** rec, User& client, int cnt) {
 	return 0;
 }
 
+
+// Command: JOIN
+//    Parameters: <channel>
+void Handler::join_channel(char** rec, User& client, int cnt) {
+	if (cnt < 2) {
+		IRCERROR::sent_error("ERR_NEEDMOREPARAMS", client);
+		return;
+	}
+	if (cnt > 2) {
+		return;
+	}
+	string name = rec[1];
+	if (channel_map.find(name) == channel_map.end()) {
+
+		// TODO
+
+		return;
+	}
+
+}
+
+// Command: USERS
 void Handler::list_users(User& client) {
 	stringstream ss;
 
 	ss << Handler::getDataFormat(392, client.getName());
 	ss << ":";
 	ss << setw(31) << left << "UserID";
-	ss << "Terminal  Host\n";
+	ss << setw(10) << left << "Terminal";
+	ss << "Host\n";
 
 	string tmp = Handler::getDataFormat(393, client.getName());
 	for (auto i : clients) {
@@ -69,11 +98,30 @@ void Handler::list_users(User& client) {
 	ss << Handler::getDataFormat(394, client.getName());
 	ss << ":End of users\n";
 
-	string now = ss.str();
-	char const *pchar = now.c_str(); 
-	send(client.getFD(), pchar, now.length(), 0);
+	Handler::send_data(ss.str(), client);
 }
 
+// Command: LIST
+// :mircd 321 test23 Channel :Users Name
+// :mircd 323 test23 :End of Liset
+void Handler::list_channel(User& client) {
+	stringstream ss;
+
+	ss << Handler::getDataFormat(321, client.getName());
+	ss << "Channel :Users Name\n";
+
+	string tmp = Handler::getDataFormat(322, client.getName());
+	for (int i = 0; i < MAXCONN; i++) if (channels[i].isUsed()) {
+		ss << tmp << " #" << channels[i].getName() << " ";
+		ss << channels[i].get_num_usr() << " :";
+		ss << channels[i].getTopic() << '\n';
+	}
+
+	ss << Handler::getDataFormat(323, client.getName());
+	ss << ":End of Liset\n";
+
+	Handler::send_data(ss.str(), client);
+}
 
 
 void Handler::handle(char** rec, User& client, int cnt) {
@@ -93,9 +141,7 @@ void Handler::handle(char** rec, User& client, int cnt) {
 	// }
 
 	if (strcmp(rec[0], "PING") == 0) { // Pong
-		string now = "PONG <null>\n";
-		char const *pchar = now.c_str(); 
-		send(client.getFD(), pchar, now.length(), 0);
+		Handler::send_data("PONG <null>\n", client);
 		return;
 	}
 	if (strcmp(rec[0], "USERS") == 0) {
@@ -103,7 +149,36 @@ void Handler::handle(char** rec, User& client, int cnt) {
 		return;
 	}
 
+	if (strcmp(rec[0], "TOPIC") == 0) {
+		// User must in channel
+		// TOPIC #abc :This is Topic
+		return;
+	}
+	if (strcmp(rec[0], "LIST") == 0) {
+		Handler::list_channel(client);
+		return;
+	}
+	if (strcmp(rec[0], "NAMES") == 0) {
+		return;
+	}
+	if (strcmp(rec[0], "JOIN") == 0) {
+ 		// :mircd 331 CCC #B :No topic is set
+ 		// :mircd 353 CCC #B :<u> <u>
+ 		// :mircd 366 CCC #B :End of Names List
+		return;
+	}
+	if (strcmp(rec[0], "PART") == 0) {
+		return;
+	}
+	if (strcmp(rec[0], "PRIVMSG") == 0) {
+		return;
+	}
 
+
+	if (strcmp(rec[0], "QUIT") == 0) {
+		
+		return;
+	}
 
 
 	// Command not found

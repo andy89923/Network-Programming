@@ -15,6 +15,7 @@ set<string> all_user_name;
 
 User::User() {
 	this -> fd_num = -1;
+	this -> cha_name = "";
 }
 
 void User::init() {
@@ -22,9 +23,11 @@ void User::init() {
 		all_user_name.find(this -> name) != all_user_name.end()) 
 		all_user_name.erase(this -> name);
 
-	this -> fd_num = -1;
-	this -> name = "";
-	this -> registered = 0;
+	this -> fd_num     = -1;
+	this -> name       = "";
+	this -> cha_name   = "";
+	this -> registered = 0 ;
+	
 }
 
 void User::setIP(in_addr ip) {
@@ -63,6 +66,10 @@ void User::setUser(string  username,
 	if (this -> registered == 3) this -> welcome_message();
 }
 
+void User::joinChat(string name) {
+	this -> cha_name = name;
+}
+
 void User::welcome_message() {
 	string now = "";
 	string name = this -> name;
@@ -86,7 +93,9 @@ void User::welcome_message() {
 	this -> registered = 5;
 }
 
+
 int  User::getFD()     const { return this -> fd_num;          }
+bool User::inChat()    const { return this -> cha_name == "";  }
 bool User::isRegist()  const { return this -> registered >= 5; }
 bool User::isUsed()    const { return this -> fd_num > 0;      }
 string User::getName() const { return this -> name;            }

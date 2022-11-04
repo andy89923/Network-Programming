@@ -13,6 +13,7 @@ using namespace std;
 #include "User.h"
 #include "Handler.h"
 #include "Global.h"
+#include "Channel.h"
 
 char buf[BUFSIZE];
 
@@ -65,6 +66,7 @@ void server_init(int &sock) {
 	select_init(sock);
 	num_clients = 0;
 	all_user_name.clear();
+	channel_map.clear();
 }
 
 int main(int argc, char* argv[]) {
@@ -100,8 +102,8 @@ int main(int argc, char* argv[]) {
 
 					num_clients += 1;
 
-					// connection
-					cout << "Connect! " << inet_ntoa(clients[i].getIP()) << '\n';
+					// new connection
+					cout << "New connect from " << inet_ntoa(clients[i].getIP()) << '\n';
 
 					break;
 				}

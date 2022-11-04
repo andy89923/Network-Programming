@@ -17,8 +17,10 @@ protected:
 	string name;  // Nickname
 
 	string username, hostname, servername, realname;
+	string cha_name;
 
 	int registered;
+
 
 public:
 	User();
@@ -31,9 +33,11 @@ public:
 	void setName(string);
 
 	void setUser(string, string, string, string);
+	void joinChat(string);
 
 	void welcome_message();
 
+	bool inChat() const;
 	bool isUsed() const;
 	bool isRegist() const;
 	string getName() const;

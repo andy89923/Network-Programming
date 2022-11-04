@@ -11,16 +11,17 @@ protected:
 	static int set_user_info(char**, User&, int);
 	static int change_user_name(char**, User&, int);
 	static void list_users(User&);
+	static void list_channel(User&);
+	static void join_channel(char**, User&, int);
 
 public:
 
 	static void handle(char**, User&, int);
 
 	static string getDataFormat(int, string);
+
+	static bool send_data(string, User&);
 };
-
-
-
 
 
 namespace server_constants {

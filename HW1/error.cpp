@@ -18,6 +18,8 @@ void IRCERROR::init_error() {
 }
 
 void IRCERROR::init_error_info() {
+	error_info[331] = " :No topic is set";
+
 	error_info[451] = " :You have not registered";
 	error_info[436] = " :Nickname collision KILL";
 	error_info[461] = " :Not enought parameters";
