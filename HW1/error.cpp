@@ -24,6 +24,7 @@ void IRCERROR::init_error_info() {
 	error_info[451] = " :You have not registered";
 	error_info[436] = " :Nickname collision KILL";
 	error_info[461] = " :Not enought parameters";
+	error_info[431] = " :No nickname given";
 }
 
 void IRCERROR::sent_error(string type, User client) {

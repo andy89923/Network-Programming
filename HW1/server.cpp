@@ -129,9 +129,8 @@ int main(int argc, char* argv[]) {
 				if (read_len == 0) {
 					close(now_sock);
 					FD_CLR(now_sock, &all_set);
-					
-					clients[i].init();
 
+					clients[i].init();
 					num_clients -= 1;
 					disconnect = 1;
 				}
@@ -151,7 +150,11 @@ int main(int argc, char* argv[]) {
 						recv[cnt++] = token;
 						token = strtok(NULL, s);
 					}
-					Handler::handle(recv, clients[i], cnt);
+					
+					int isQuit = Handler::handle(recv, clients[i], cnt);
+					if (isQuit) {
+						FD_CLR(now_sock, &all_set);
+					}
 				}
 
 				memset(buf, 0, sizeof(buf));

@@ -3,6 +3,7 @@
 #include <sstream>
 #include <iomanip>
 #include <set>
+#include <unistd.h>
 using namespace std;
 
 #include "Handler.h"
@@ -234,14 +235,14 @@ void Handler::send_message(char** rec, User& client, int cnt) {
 }
 
 
-void Handler::handle(char** rec, User& client, int cnt) {
+int Handler::handle(char** rec, User& client, int cnt) {
 	if (strcmp(rec[0], "USER") == 0) {
 		Handler::set_user_info(rec, client, cnt);
-		return;
+		return 0;
 	}
 	if (strcmp(rec[0], "NICK") == 0) {
 		Handler::change_user_name(rec, client, cnt);
-		return;
+		return 0;
 	}
 
 	// Cheak whether user register or not
@@ -252,40 +253,44 @@ void Handler::handle(char** rec, User& client, int cnt) {
 
 	if (strcmp(rec[0], "PING") == 0) { // Pong
 		Handler::send_data("PONG <null>\n", client);
-		return;
+		return 0;
 	}
 	if (strcmp(rec[0], "USERS") == 0) {
 		Handler::list_users(client);
-		return;
+		return 0;
 	}
 	if (strcmp(rec[0], "TOPIC") == 0) {
 		Handler::setTopic(rec, client, cnt);
-		return;
+		return 0;
 	}
 	if (strcmp(rec[0], "LIST") == 0) {
 		Handler::list_channel(client);
-		return;
+		return 0;
 	}
 	if (strcmp(rec[0], "NAMES") == 0) {
 		Handler::list_channel_users(rec, client, cnt);
-		return;
+		return 0;
 	}
 	if (strcmp(rec[0], "JOIN") == 0) {
 		Handler::join_channel(rec, client, cnt);
-		return;
+		return 0;
 	}
 	if (strcmp(rec[0], "PART") == 0) {
 		Handler::leave_channel(rec, client, cnt);
-		return;
+		return 0;
 	}
 	if (strcmp(rec[0], "PRIVMSG") == 0) {
 		Handler::send_message(rec, client, cnt);
-		return;
+		return 0;
 	}
 
 
-	if (strcmp(rec[0], "QUIT") == 0) {	
-		return;
+	if (strcmp(rec[0], "QUIT") == 0) {
+		close(client.getFD());
+		client.init();
+		num_clients -= 1;
+		
+		return 1;
 	}
 
 

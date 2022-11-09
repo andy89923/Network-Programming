@@ -20,7 +20,7 @@ protected:
 
 public:
 
-	static void handle(char**, User&, int);
+	static int handle(char**, User&, int);
 
 	static string getDataFormat(int, string);
 

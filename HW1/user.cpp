@@ -80,7 +80,7 @@ void User::welcome_message() {
 
 	string tmp = Handler::getDataFormat(372, name);
 
-	now += Handler::getDataFormat(375, name) + ":- mircd Message of the day -  \n";
+	now += Handler::getDataFormat(375, name) + ":- ctfang Message of the day - \n";
 	now += tmp                               + ":-                             \n";
 	now += tmp                               + ":-  ░░░▐▀▀▄█▀▀▀▀▀▒▄▒▀▌░░░░     \n";
 	now += tmp                               + ":-  ░░░▐▒█▀▒▒▒▒▒▒▒▒▀█░░░░░     \n";
