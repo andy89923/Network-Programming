@@ -6,7 +6,9 @@ client: client.cpp
 
 server: server.cpp
 	g++-7 server.cpp -o server
-	./server 10005
+
+test: server
+	./server 9998
 
 clean:
-	rm -f server client
+	rm -f server client test
