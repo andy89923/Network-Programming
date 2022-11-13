@@ -87,7 +87,7 @@ void handle(int now_cmd_sock) {
 		ss << now_time.tv_sec << '.' << now_time.tv_usec;
 		ss << " REPORT " << total_size << " ";
 		ss << elp << "s ";
-		ss << 8.0 * total_size / 1000000.0 / (elp) << "Mbps\n";
+		ss << (double) 8.0 * total_size / 1000000.0 / (elp) << "Mbps\n";
 	}
 	if (strncmp(buf, "/clients", 8) == 0) {
 		ss << now_time.tv_sec << '.' << now_time.tv_usec;
@@ -182,6 +182,7 @@ int main(int argc, char* argv[]) {
 				FD_CLR(i, &all_set);
 
 				removed.push_back(i);
+				num_clients --;
 				continue;
 			}
 			total_size += read_len;
