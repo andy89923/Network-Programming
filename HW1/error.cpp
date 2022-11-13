@@ -25,6 +25,7 @@ void IRCERROR::init_error_info() {
 	error_info[436] = " :Nickname collision KILL";
 	error_info[461] = " :Not enought parameters";
 	error_info[431] = " :No nickname given";
+	error_info[421] = " :Unknown command";
 }
 
 void IRCERROR::sent_error(string type, User client) {

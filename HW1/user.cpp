@@ -62,7 +62,6 @@ void User::setUser(string  username,
 	this -> realname   = realname;
 
 	this -> registered |= 2;
-
 	if (this -> registered == 3) this -> welcome_message();
 }
 

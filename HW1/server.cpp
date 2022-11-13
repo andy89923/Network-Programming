@@ -95,12 +95,11 @@ int main(int argc, char* argv[]) {
 			for (int i = 0; i < FD_SETSIZE; i++) {
 				if (clients[i].getFD() < 0) {
 					max_po = max(max_po, i);
+					num_clients += 1;
 
 					clients[i].setFD(connect_fd);
 					clients[i].setIP(client_id.sin_addr);
 					clients[i].setPort(ntohs(client_id.sin_port));
-
-					num_clients += 1;
 
 					// new connection
 					cout << "New connect from " << inet_ntoa(clients[i].getIP()) << '\n';

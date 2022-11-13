@@ -11,7 +11,7 @@ server: $(SOURCE)
 	$(CPP) $(CPP_FLAG) -o $(TEST_PROG) $(SOURCE) -I $(TEMPLATE_PATH)
 
 test: $(TEST_PROG)
-	./$(TEST_PROG) 10005
+	./$(TEST_PROG) 10004
 
 
 clean:

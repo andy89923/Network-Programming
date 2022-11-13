@@ -297,4 +297,10 @@ int Handler::handle(char** rec, User& client, int cnt) {
 	// Command not found
 	cerr << rec[0] << " command not found!\n";
 
+	stringstream ss;
+	ss << ":ctfang 421 " << client.getName() << " " << rec[0];
+	ss << " :Unknown command\n";
+	Handler::send_data(ss.str(), client);
+
+	return 0;
 }
