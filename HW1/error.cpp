@@ -26,6 +26,39 @@ void IRCERROR::init_error_info() {
 	error_info[461] = " :Not enought parameters";
 	error_info[431] = " :No nickname given";
 	error_info[421] = " :Unknown command";
+	error_info[411] = " :No recipient given (PRIVMSG)";
+	error_info[412] = " :No text to send";
+	error_info[442] = " :You are not on that channel";
+}
+
+void IRCERROR::sent_error_with_channel(string type, User client, string chat) {
+	cerr << "ERROR " << type << '\n';
+
+	int code = error_code[type];
+	string ss = server_constants::SERVER_PREFIX;
+
+	ss += to_string(code) + " #" + chat;
+	ss += error_info[code];
+	ss += "\n";
+
+	// send
+	char const *pchar = ss.c_str(); 
+	send(client.getFD(), pchar, ss.length(), 0);
+}
+
+void IRCERROR::sent_error_with_command(string type, User client, string command) {
+	cerr << "ERROR " << type << '\n';
+
+	int code = error_code[type];
+	string ss = server_constants::SERVER_PREFIX;
+
+	ss += to_string(code) + " " + command;
+	ss += error_info[code];
+	ss += "\n";
+
+	// send
+	char const *pchar = ss.c_str(); 
+	send(client.getFD(), pchar, ss.length(), 0);
 }
 
 void IRCERROR::sent_error(string type, User client) {

@@ -21,6 +21,8 @@ public:
 	static void init_error_info();
 
 	static void sent_error(string type, User who);
+	static void sent_error_with_channel(string, User, string);
+	static void sent_error_with_command(string, User, string);
 };
 
 

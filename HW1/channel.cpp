@@ -41,8 +41,10 @@ void Channel::pop_usr(User& client) {
 }
 
 void Channel::send_message(string source, string message) {
+	message.erase(message.begin());
+	
 	string s = ":" + source + " PRIVMSG #" + this -> name + " :";
-	s += message;
+	s += message + "\n";
 
 	char const *pchar = s.c_str(); 
 	for (auto i : this -> v) if (i -> getName() != source) {

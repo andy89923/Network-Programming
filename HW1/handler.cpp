@@ -30,7 +30,7 @@ string Handler::getDataFormat(int code, string name) {
 int Handler::set_user_info(char** rec, User& client, int cnt) {
 	if (cnt < 5 || cnt > 5) {
 		cerr << "USER command error!\n";
-		IRCERROR::sent_error("ERR_NEEDMOREPARAMS", client);
+		IRCERROR::sent_error_with_command("ERR_NEEDMOREPARAMS", client, "USER");
 		return 1;
 	}
 
@@ -60,18 +60,17 @@ void Handler::leave_channel(char** rec, User& client, int cnt) {
 		IRCERROR::sent_error("ERR_NEEDMOREPARAMS", client);
 		return;
 	}
-	if (cnt > 2) { return; }
 
 	string name = rec[1];
 	if (name[0] == '#') name.erase(name.begin());
 
 	if (channel_map.find(name) == channel_map.end()) {
-		IRCERROR::sent_error("ERR_NOSUCHCHANNEL", client);
+		IRCERROR::sent_error_with_channel("ERR_NOSUCHCHANNEL", client, name);
 		return;
 	}
 
 	if (client.getChat() != name || client.getChat() == "") {
-		IRCERROR::sent_error("ERR_NOTONCHANNEL", client);
+		IRCERROR::sent_error_with_channel("ERR_NOTONCHANNEL", client, name);
 		return;
 	}
 
@@ -170,13 +169,24 @@ void Handler::list_channel(User& client) {
 
 // Command: TOPIC <channel> [<topic>]
 void Handler::setTopic(char** rec, User& client, int cnt) {
-	if (cnt < 3) {
-		IRCERROR::sent_error("ERR_NEEDMOREPARAMS", client);
+	if (cnt < 2) {
+		IRCERROR::sent_error_with_command("ERR_NEEDMOREPARAMS", client, "TOPIC");
 		return;
 	}
 	string name = rec[1]; name.erase(name.begin());
 	if (client.getChat() != name || client.getChat() == "") {
-		IRCERROR::sent_error("ERR_NOTONCHANNEL", client);
+		IRCERROR::sent_error_with_channel("ERR_NOTONCHANNEL", client, name);
+		return;
+	}
+	if (cnt == 2) {
+		int idx = channel_map[name];
+		
+		stringstream ss;
+		ss << server_constants::SERVER_PREFIX;
+		ss << " 332 " << client.getName() << " #" << name;
+		ss << " :" << channels[idx].getTopic() << '\n';
+
+		Handler::send_data(ss.str(), client);
 		return;
 	}
 	string topic = rec[2]; topic.erase(topic.begin());
@@ -217,13 +227,17 @@ void Handler::list_channel_users(char** rec, User& client, int cnt) {
 
 // Command: PRIVMSG <channel> <message>
 void Handler::send_message(char** rec, User& client, int cnt) {
-	if (cnt < 3) {
-		IRCERROR::sent_error("ERR_NEEDMOREPARAMS", client);
+	if (cnt == 1) {
+		IRCERROR::sent_error("ERR_NORECIPIENT", client);
+		return;
+	}
+	if (cnt == 2) {
+		IRCERROR::sent_error("ERR_NOTEXTTOSEND", client);
 		return;
 	}
 	string name = rec[1]; name.erase(name.begin());
 	if (channel_map.find(name) == channel_map.end()) {
-		IRCERROR::sent_error("ERR_NOSUCHNICK", client);
+		IRCERROR::sent_error_with_channel("ERR_NOSUCHNICK", client, name);
 		return;
 	}
 	int idx = channel_map[name];
@@ -236,6 +250,12 @@ void Handler::send_message(char** rec, User& client, int cnt) {
 
 
 int Handler::handle(char** rec, User& client, int cnt) {
+
+	cout << client.getName() << ": ";
+	for (int i = 0; i < cnt; i++) cout << rec[i] << ' ';
+	cout << '\n';
+
+
 	if (strcmp(rec[0], "USER") == 0) {
 		Handler::set_user_info(rec, client, cnt);
 		return 0;
@@ -295,12 +315,8 @@ int Handler::handle(char** rec, User& client, int cnt) {
 
 
 	// Command not found
-	cerr << rec[0] << " command not found!\n";
-
-	stringstream ss;
-	ss << ":ctfang 421 " << client.getName() << " " << rec[0];
-	ss << " :Unknown command\n";
-	Handler::send_data(ss.str(), client);
-
+	string cmd = rec[0];
+	cerr << cmd << " command not found!\n";
+	IRCERROR::sent_error_with_command("ERR_UNKNOWNCOMMAND", client, cmd);
 	return 0;
 }
