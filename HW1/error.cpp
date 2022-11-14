@@ -37,7 +37,7 @@ void IRCERROR::sent_error_with_channel(string type, User client, string chat) {
 	int code = error_code[type];
 	string ss = server_constants::SERVER_PREFIX;
 
-	ss += to_string(code) + " #" + chat;
+	ss += to_string(code) + " " + client.getName() + " #" + chat;
 	ss += error_info[code];
 	ss += "\n";
 
@@ -52,7 +52,7 @@ void IRCERROR::sent_error_with_command(string type, User client, string command)
 	int code = error_code[type];
 	string ss = server_constants::SERVER_PREFIX;
 
-	ss += to_string(code) + " " + command;
+	ss += to_string(code) + " " + client.getName() + " " + command;
 	ss += error_info[code];
 	ss += "\n";
 
@@ -67,7 +67,7 @@ void IRCERROR::sent_error(string type, User client) {
 	int code = error_code[type];
 	string ss = server_constants::SERVER_PREFIX;
 
-	ss += to_string(code) + error_info[code];
+	ss += to_string(code) + " " + client.getName() + error_info[code];
 	ss += "\n";
 
 	// send

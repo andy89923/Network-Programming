@@ -112,8 +112,11 @@ void Handler::join_channel(char** rec, User& client, int cnt) {
 	stringstream ss;
 
 	ss << ":" << client.getName() << " JOIN #" << name << "\n";
-	ss << getDataFormat(331, client.getName()) << "#" << name << " :";
-	ss << channels[idx].getTopic() << '\n';
+
+	string topic = channels[idx].getTopic();
+
+	ss << getDataFormat((topic == "No topic is set" ? 331 : 332), client.getName()) << "#" << name << " :";
+	ss << topic << '\n';
 	ss << getDataFormat(353, client.getName()) << "#" << name << " :";
 	ss << channels[idx].getUsers() << '\n';
 	ss << getDataFormat(366, client.getName()) << "#" << name << " :";
@@ -250,11 +253,9 @@ void Handler::send_message(char** rec, User& client, int cnt) {
 
 
 int Handler::handle(char** rec, User& client, int cnt) {
-
-	cout << client.getName() << ": ";
-	for (int i = 0; i < cnt; i++) cout << rec[i] << ' ';
-	cout << '\n';
-
+	// cout << client.getName() << ": ";
+	// for (int i = 0; i < cnt; i++) cout << rec[i] << ' ';
+	// cout << '\n';
 
 	if (strcmp(rec[0], "USER") == 0) {
 		Handler::set_user_info(rec, client, cnt);
