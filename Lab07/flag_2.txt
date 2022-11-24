@@ -1,0 +1,4 @@
+INP{27e9266b1d4b6372235d15c6ff4a66056ab9f25b_637f0b44_9dfac_82c29fa8f8785ad3bfc6158f3400228a59e45b29}
+
+put the same text in slot 1 & 2, get the oseed from slot 1, 
+and manually fit oseed, run the same program locally, and get the slot 2 answer

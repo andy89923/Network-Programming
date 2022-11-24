@@ -1,0 +1,5 @@
+INP{e1242df8152b0edd0a7111ba06a750e5ad95a175_637f0ab0_61050_deaeb990f241e4836e894b7e6406d889a767d5e0}
+
+
+
+put the same text in slot 1 & 2, get the answer from slot 1, and it would be the same to slot 2
