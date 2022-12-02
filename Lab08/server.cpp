@@ -40,27 +40,44 @@ void udp_socket(int& sock, sockaddr_in& server_id, int port) {
 
 struct files {
 	int recv[SEG];
+	int leng[SEG];
+	int max_indx, cnt;
 
 	string name;
 	char data[SEG][MAX_SENDSIZE];
 };
 
 files f[MAXFILE];
-char buf[MAX], tmp[MAX];
+char buf[MAX];
 
 string root_path;
 int num_files;
 
-void handle_file(int sig) {
-	for (int i = 0; i < num_files; i++) {
-		ofstream file(root_path + f[i].name);
+void output_file(int i) {
+	ofstream file(root_path + f[i].name, ios::out | ios::binary);
 
-		for (int j = 0; j < SEG; j++) if (f[i].recv[j]) {
-			file << f[i].data[j];
-		}
-		file.close();
+	for (int j = 0; j < f[i].max_indx; j++) if (f[i].recv[j]) {
+		file.write(f[i].data[j], f[i].leng[j]);
+
+		// cout << i << ' ' << j << ' ' << strlen(f[i].data[j]) << " -> " << f[i].data[j] << '\n';
 	}
-	exit(0);
+	file.close();
+}
+
+void init() {
+	for (int i = 0; i < num_files; i++) {
+		stringstream ss;
+		ss << setw(6) << setfill('0') << i;
+		
+		f[i].name = ss.str();
+		f[i].max_indx = -1;
+		f[i].cnt = 0;
+
+		for (int j = 0; j < SEG; j++) {
+			memset(f[i].data[j], 0, MAX_SENDSIZE);
+			f[i].recv[j] =  0;
+		}
+	}
 }
 
 // /server <path-to-store-files> <total-number-of-files> <port>
@@ -69,19 +86,11 @@ int main(int argc, char* argv[]) {
 		cout << "Usage: /server <path-to-store-files> <total-number-of-files> <port>\n";
 		exit(1);
 	}
-	root_path = argv[1] + "/";
+	root_path = argv[1]; 
+	root_path = root_path + "/";
 	num_files = atoi(argv[2]);
-
-	for (int i = 0; i < num_files; i++) {
-		stringstream ss;
-		ss << setw(6) << setfill('0') << i;
-		f[i].name = ss.str();
-
-		for (int j = 0; j < SEG; j++) {
-			memset(f[i].data[j], 0, MAX_SENDSIZE);
-			f[i].recv[j] =  0;
-		}
-	}
+	
+	init();
 
 	int sock;
 	int listen_port = atoi(argv[3]);
@@ -90,41 +99,75 @@ int main(int argc, char* argv[]) {
 	// socket 
 	udp_socket(sock, server_id, listen_port);
 
-
 	struct sockaddr_in client_id;
 	bzero(&client_id, sizeof(client_id));
 	socklen_t csinlen = sizeof(client_id);
-	
-	signal(SIGINT, handle_file);
 
+	#define FILE_NAME_LEN 6
+	#define FILE_IDXS_LEN 4
+	#define DATA_LENG_LEN 4
+
+	int sum = 0;
 	while (true) {
 		int rlen;
 		if( (rlen = recvfrom(sock, buf, sizeof(buf), 0, (struct sockaddr*) &client_id, &csinlen)) < 0) {
 			perror("recvfrom");
 			break;
 		}
-
-		string raw = string(buf, rlen); 
-
-		// file_name
-		memset(tmp, 0, sizeof(tmp));
-		strncpy(tmp, raw.c_str(), 6);
-		int now_file = atoi(tmp);
+		int offset = 0;
+		int now_file, now_indx, max_indx, dat_leng;
+		
+		// file name
+		memcpy(&now_file, buf + offset, FILE_NAME_LEN);
+		offset += FILE_NAME_LEN;
 
 		// idx
-		memset(tmp, 0, sizeof(tmp));
-		strncpy(tmp, raw.c_str() + 10, 4);
-		int now_idx = atoi(tmp);
+		memcpy(&now_indx, buf + offset, FILE_IDXS_LEN);
+		offset += FILE_IDXS_LEN;
 
-		// data
-		memset(tmp, 0, sizeof(tmp));
-		strncpy(tmp, raw.c_str() + 10, rlen - 10);
-		string now_data = string(tmp);
+		// max idx
+		memcpy(&max_indx, buf + offset, FILE_IDXS_LEN);
+		offset += FILE_IDXS_LEN;
 
-		f[now_file].data[now_idx] = now_data;
-		f[now_file].recv[now_idx] = 1;
+		// data length
+		memcpy(&dat_leng, buf + offset, DATA_LENG_LEN);
+		offset += DATA_LENG_LEN;
+
+		// checksum
+		uint64_t check_sum;
+		memcpy(&check_sum, buf + offset, sizeof(check_sum));
+		offset += sizeof(check_sum);
+
+		// cout << "File info: " << now_file << ' ' << now_indx << '\n';
+
+
+
+		f[now_file].max_indx = max_indx;
+		f[now_file].leng[now_indx] = dat_leng;
+
+		memcpy(f[now_file].data[now_indx], buf + offset, rlen - offset);
+		
+
+		sum += dat_leng;
+
+		if (f[now_file].recv[now_indx] == 0) {
+			f[now_file].recv[now_indx] = 1;
+			f[now_file].cnt += 1;
+		}
+		if (f[now_file].max_indx == f[now_file].cnt) {
+			output_file(now_file);
+			f[now_file].max_indx = 0x3f3f3f3f;
+
+			// cout << sum << ' ' << max_indx << ' ' << now_file << " -> Saved!\n";
+		}
 
 		memset(buf, 0, sizeof(buf));
+
+		// if (now_file < 3)
+		// 	cout << now_file << ' ' << now_indx << ' ' << max_indx << ' ' << strlen(f[now_file].data[now_indx]) << '\n';
+
+		// if (now_file == 3)
+			// cout << now_indx << ' ';
 	}
 
 	return 0;
