@@ -58,10 +58,29 @@ void output_file(int i) {
 
 	for (int j = 0; j < f[i].max_indx; j++) if (f[i].recv[j]) {
 		file.write(f[i].data[j], f[i].leng[j]);
-
-		// cout << i << ' ' << j << ' ' << strlen(f[i].data[j]) << " -> " << f[i].data[j] << '\n';
 	}
 	file.close();
+}
+
+uint64_t cal_checksum(char* c, int len) {
+	uint64_t checksum = 0, now = 0;
+
+	for (int j = 0; j < len; j++) {
+		now <<= 8;	
+		now += (uint64_t) c[j];
+
+		if (j != 0 && j % 8 == 7) {
+			checksum = checksum ^ now;
+			now = 0;
+		}
+	}
+	if (len % 8 != 0) {
+		for (int j = 0; j < 8 - (len % 8); j++) {
+			now <<= 8;	
+		}
+	}
+	checksum = checksum ^ now;
+	return checksum;
 }
 
 void init() {
@@ -109,6 +128,8 @@ int main(int argc, char* argv[]) {
 
 	int sum = 0;
 	while (true) {
+		memset(buf, 0, sizeof(buf));
+
 		int rlen;
 		if( (rlen = recvfrom(sock, buf, sizeof(buf), 0, (struct sockaddr*) &client_id, &csinlen)) < 0) {
 			perror("recvfrom");
@@ -140,31 +161,28 @@ int main(int argc, char* argv[]) {
 
 		// cout << "File info: " << now_file << ' ' << now_indx << '\n';
 
+		memcpy(f[now_file].data[now_indx], buf + offset, rlen - offset);
 
+		uint64_t now_checksum = cal_checksum(f[now_file].data[now_indx], dat_leng);
+
+		if (check_sum != now_checksum) continue;
+		if (f[now_file].recv[now_indx]) continue;
 
 		f[now_file].max_indx = max_indx;
 		f[now_file].leng[now_indx] = dat_leng;
 
-		memcpy(f[now_file].data[now_indx], buf + offset, rlen - offset);
-		
-
 		sum += dat_leng;
+		f[now_file].recv[now_indx] = 1;
+		f[now_file].cnt += 1;
 
-		if (f[now_file].recv[now_indx] == 0) {
-			f[now_file].recv[now_indx] = 1;
-			f[now_file].cnt += 1;
-		}
 		if (f[now_file].max_indx == f[now_file].cnt) {
 			output_file(now_file);
 			f[now_file].max_indx = 0x3f3f3f3f;
-
 			// cout << sum << ' ' << max_indx << ' ' << now_file << " -> Saved!\n";
 		}
 
-		memset(buf, 0, sizeof(buf));
-
 		// if (now_file < 3)
-		// 	cout << now_file << ' ' << now_indx << ' ' << max_indx << ' ' << strlen(f[now_file].data[now_indx]) << '\n';
+		// cout << now_file << ' ' << now_indx << ' ' << max_indx << ' ' << f[now_file].leng[now_indx] << '\n';
 
 		// if (now_file == 3)
 			// cout << now_indx << ' ';
