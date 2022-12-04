@@ -10,10 +10,11 @@
 #include <iomanip>
 using namespace std;
 
-#define SEG 2048
-#define MAX 2048
+#define SEG 64
+#define MAX 10000
 #define MAXFILE 1010
-#define MAX_SENDSIZE 256
+#define MAX_SENDSIZE 10000
+#define SENDSIZE 8192
 
 void udp_socket(int& sock, sockaddr_in& server_id, int port) {
 	sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -99,6 +100,19 @@ void init() {
 	}
 }
 
+void send_ack(int sock, sockaddr_in& client_id, int now_file, int now_indx) {
+	char ack[16];
+	
+	memset(ack, 0, sizeof(ack));
+	memcpy(ack, &now_file, sizeof(now_file));
+	memcpy(ack + sizeof(now_file), &now_indx, sizeof(now_indx));
+
+	uint64_t checksum = cal_checksum(ack, 8);
+	memcpy(ack + 8, &checksum, sizeof(checksum));
+
+	sendto(sock, ack, sizeof(ack), 0, (struct sockaddr*) &client_id, sizeof(client_id));
+}
+
 // /server <path-to-store-files> <total-number-of-files> <port>
 int main(int argc, char* argv[]) {
 	if (argc < 4) {
@@ -108,7 +122,9 @@ int main(int argc, char* argv[]) {
 	root_path = argv[1]; 
 	root_path = root_path + "/";
 	num_files = atoi(argv[2]);
-	
+		
+	num_files = 50;
+
 	init();
 
 	int sock;
@@ -121,7 +137,7 @@ int main(int argc, char* argv[]) {
 	struct sockaddr_in client_id;
 	bzero(&client_id, sizeof(client_id));
 	socklen_t csinlen = sizeof(client_id);
-
+	
 	#define FILE_NAME_LEN 6
 	#define FILE_IDXS_LEN 4
 	#define DATA_LENG_LEN 4
@@ -159,33 +175,33 @@ int main(int argc, char* argv[]) {
 		memcpy(&check_sum, buf + offset, sizeof(check_sum));
 		offset += sizeof(check_sum);
 
-		// cout << "File info: " << now_file << ' ' << now_indx << '\n';
-
 		memcpy(f[now_file].data[now_indx], buf + offset, rlen - offset);
 
 		uint64_t now_checksum = cal_checksum(f[now_file].data[now_indx], dat_leng);
 
 		if (check_sum != now_checksum) continue;
-		if (f[now_file].recv[now_indx]) continue;
+		send_ack(sock, client_id, now_file, now_indx);
 
+		if (f[now_file].recv[now_indx]) continue;
+		
+		f[now_file].recv[now_indx] = 1;
 		f[now_file].max_indx = max_indx;
 		f[now_file].leng[now_indx] = dat_leng;
 
 		sum += dat_leng;
-		f[now_file].recv[now_indx] = 1;
+		
 		f[now_file].cnt += 1;
 
 		if (f[now_file].max_indx == f[now_file].cnt) {
 			output_file(now_file);
 			f[now_file].max_indx = 0x3f3f3f3f;
-			// cout << sum << ' ' << max_indx << ' ' << now_file << " -> Saved!\n";
 		}
 
 		// if (now_file < 3)
-		// cout << now_file << ' ' << now_indx << ' ' << max_indx << ' ' << f[now_file].leng[now_indx] << '\n';
+		// 	cout << "Checksum pass: " << now_file << ' ' << now_indx << ' ' << max_indx << ' ' << f[now_file].leng[now_indx] << '\n';
 
 		// if (now_file == 3)
-			// cout << now_indx << ' ';
+		// 	cout << now_indx << ' ';
 	}
 
 	return 0;

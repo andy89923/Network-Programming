@@ -10,11 +10,11 @@
 #include <iomanip>
 using namespace std;
 
-#define SEG 2048
-#define MAX 2048
+#define SEG 64
+#define MAX 10000
 #define MAXFILE 1010
-#define MAX_SENDSIZE 256
-#define SENDSIZE 200
+#define MAX_SENDSIZE 10000
+#define SENDSIZE 8192
 
 struct files {
 	int send[SEG], max_indx;
@@ -68,22 +68,19 @@ void init() {
 		
 		int cnt = 0;
 		for (int j = 0; j < SEG; j++) {
-			if (!file.eof()) {
-				memset(buf, 0, MAX_SENDSIZE);
-				cnt += 1;
+			memset(buf, 0, MAX);
+			
+			int len = file.readsome(buf, SENDSIZE);
+			if (len == 0) break;
 
-				int len = file.readsome(buf, SENDSIZE);
+			cnt += 1;
+			memcpy(f[i].data[j], buf, SENDSIZE);
 
-				memcpy(f[i].data[j], buf, SENDSIZE);
+			f[i].leng[j] = len;
+			f[i].send[j] =  0;
+			f[i].checksum[j] = cal_checksum(buf, f[i].leng[j]);
 
-				f[i].leng[j] = len;
-				f[i].send[j] =  0;
-				f[i].checksum[j] = cal_checksum(buf, f[i].leng[j]);
-
-				sum += f[i].leng[j];
-			}
-			else
-				f[i].send[j] = 1;
+			sum += f[i].leng[j];
 		}
 		f[i].max_indx = cnt;
 
@@ -96,6 +93,7 @@ void init() {
 #define FILE_NAME_LEN 6
 #define FILE_IDXS_LEN 4
 #define DATA_LENG_LEN 4
+#define ACK_LEN       16
 
 void send_data(int sock, int now_file, int now_indx, sockaddr_in &server_id) {
 	int offset = 0;
@@ -124,6 +122,33 @@ void send_data(int sock, int now_file, int now_indx, sockaddr_in &server_id) {
 	sendto(sock, buf, offset, 0, (struct sockaddr*) &server_id, sizeof(server_id));	
 }
 
+void check_ack(int sock, sockaddr_in &server_id) {
+	char ack[ACK_LEN];
+	memset(ack, 0, sizeof(ack));
+	
+	socklen_t servlen = sizeof(server_id);
+	int rlen;
+
+	if ( (rlen = recvfrom(sock, ack, sizeof(ack), 0, (struct sockaddr*) &server_id, &servlen) ) < 0) {
+        return;
+    }
+    int now_file, now_indx;
+    uint64_t checksum;
+    uint64_t now_checksum = cal_checksum(ack, 8);
+
+    memcpy(&now_file, ack, sizeof(now_file));
+    memcpy(&now_indx, ack + 4, sizeof(now_indx));
+    memcpy(&checksum, ack + 8, sizeof(checksum));
+
+    if (checksum != now_checksum) return;
+
+    if (now_file < num_files && now_indx < f[now_file].max_indx) {
+    	f[now_file].send[now_indx] = 1;
+
+    	// cout << "ACK " << now_file << ' ' << now_indx << '\n';
+    }
+}
+
 // /client <path-to-read-files> <total-number-of-files> <port> <server-ip-address>
 int main(int argc, char* argv[]) {
 	if (argc < 4) {
@@ -136,26 +161,46 @@ int main(int argc, char* argv[]) {
 	root_path = root_path + "/";
 	num_files = atoi(argv[2]);
 	
+	num_files = 50;
+
 	init();
 
 	int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	
+	#define TIMEOUT 1e5    
+    struct timeval tv;
+    tv.tv_sec = 0;
+    tv.tv_usec = TIMEOUT;
+	setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
 
 	struct sockaddr_in server_id;	
 	server_id.sin_family = AF_INET;
 	server_id.sin_port   = htons(atoi(argv[3]));
-	inet_pton(AF_INET, argv[argc-1], &server_id.sin_addr);
+	inet_pton(AF_INET, argv[4], &server_id.sin_addr);
 
-	for (int i = 0; i < num_files; i++) {
-		for (int j = 0; j < f[i].max_indx; j++) {
-			memset(buf, 0, sizeof(buf));
+	while (true) {
+		srand(time(NULL));
+		
+		int send_cnt = 0;
 
-			int cnt = 5;
-			while(cnt--) {
+		for (int i = 0; i < num_files; i++) {
+			for (int j = 0; j < f[i].max_indx; j++) {
+				if (f[i].send[j]) continue;
+
+				memset(buf, 0, sizeof(buf));
+				send_cnt += 1;
+
 				send_data(sock, i, j, server_id);
-				sleep(0.1);
 			}
-			sleep(0.2);
 		}
+		for (int i = 0; i < num_files; i++) {
+			for (int j = 0; j < f[i].max_indx; j++) {
+				if (rand() % 2)
+					check_ack(sock, server_id);
+			}
+		}
+		
+		if (send_cnt == 0) break;
 	}
 
 	return 0;
