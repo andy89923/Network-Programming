@@ -156,7 +156,7 @@ int main(int argc, char* argv[]) {
 	root_path = root_path + "/";
 	num_files = atoi(argv[2]);
 	
-	num_files = NUM_FILES;
+	//num_files = NUM_FILES;
 
 	init();
 
@@ -172,15 +172,17 @@ int main(int argc, char* argv[]) {
 	server_id.sin_port   = htons(atoi(argv[3]));
 	inet_pton(AF_INET, argv[4], &server_id.sin_addr);
 
+    int send_cnt = 0;
 	while (true) {
-		int send_cnt = 0;
+        send_cnt++;
+		bool flag = false;
 
 		for (int i = 0; i < num_files; i++) {
 			for (int j = 0; j < f[i].max_indx; j++) {
 				if (f[i].send[j]) continue;
 
 				memset(buf, 0, sizeof(buf));
-				send_cnt += 1;
+				flag = true;
 
 				send_data(sock, i, j, server_id);
 
@@ -188,8 +190,9 @@ int main(int argc, char* argv[]) {
 			}
 		}
 		
-		if (send_cnt == 0) break;
+		if (!flag) break;
 	}
+    cout << "total send count: " << send_cnt << '\n';
 
 	return 0;
 }

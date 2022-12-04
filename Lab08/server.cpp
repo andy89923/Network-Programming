@@ -119,7 +119,7 @@ int main(int argc, char* argv[]) {
 	root_path = root_path + "/";
 	num_files = atoi(argv[2]);
 		
-	num_files = NUM_FILES;
+	//num_files = NUM_FILES;
 
 	init();
 
