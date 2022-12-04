@@ -9,6 +9,9 @@ server: server.cpp
 client: client.cpp
 	$(CPP) client.cpp -o client $(CPP_FLAG)
 
+submit: server client
+	./submit.py ./server ./client 9AQ853AEVK7NB6XH 
+
 test: server client
 	rm -f /tmp/tmp/00*
 	echo "=> ./client /tmp/test 4 12345 127.0.0.1"

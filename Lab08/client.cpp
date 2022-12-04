@@ -10,11 +10,11 @@
 #include <iomanip>
 using namespace std;
 
-#define SEG 64
-#define MAX 10000
-#define MAXFILE 1010
-#define MAX_SENDSIZE 10000
-#define SENDSIZE 8192
+#define MAXFILE       1010
+#define MAX           3000
+#define SEG            256
+#define MAX_SENDSIZE  1500
+#define SENDSIZE      1080
 
 struct files {
 	int send[SEG], max_indx;
@@ -161,13 +161,13 @@ int main(int argc, char* argv[]) {
 	root_path = root_path + "/";
 	num_files = atoi(argv[2]);
 	
-	num_files = 50;
+	num_files = 440;
 
 	init();
 
 	int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	
-	#define TIMEOUT 1e5    
+	#define TIMEOUT 10
     struct timeval tv;
     tv.tv_sec = 0;
     tv.tv_usec = TIMEOUT;
@@ -179,8 +179,6 @@ int main(int argc, char* argv[]) {
 	inet_pton(AF_INET, argv[4], &server_id.sin_addr);
 
 	while (true) {
-		srand(time(NULL));
-		
 		int send_cnt = 0;
 
 		for (int i = 0; i < num_files; i++) {
@@ -191,12 +189,8 @@ int main(int argc, char* argv[]) {
 				send_cnt += 1;
 
 				send_data(sock, i, j, server_id);
-			}
-		}
-		for (int i = 0; i < num_files; i++) {
-			for (int j = 0; j < f[i].max_indx; j++) {
-				if (rand() % 2)
-					check_ack(sock, server_id);
+
+				check_ack(sock, server_id);
 			}
 		}
 		
