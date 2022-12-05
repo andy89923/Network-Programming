@@ -6,7 +6,6 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <unistd.h>
-#include <sstream>
 #include <iomanip>
 #include "header.h"
 using namespace std;
@@ -81,10 +80,9 @@ uint64_t cal_checksum(char* c, int len) {
 
 void init() {
 	for (int i = 0; i < num_files; i++) {
-		stringstream ss;
-		ss << setw(6) << setfill('0') << i;
-		
-		f[i].name = ss.str();
+        char tmp[7];
+	    snprintf(tmp, 7, "%06d", i);
+        f[i].name = tmp;
 		f[i].max_indx = -1;
 		f[i].cnt = 0;
 
@@ -158,6 +156,14 @@ int main(int argc, char* argv[]) {
 		memcpy(&now_indx, buf + offset, FILE_IDXS_LEN);
 		offset += FILE_IDXS_LEN;
 
+        // send ack in advance
+        if (now_file < MAXFILE && now_indx < SEG) {
+            if (f[now_file].recv[now_indx]) {
+                send_ack(sock, client_id, now_file, now_indx);
+                //continue;
+            }
+        }
+
 		// max idx
 		memcpy(&max_indx, buf + offset, FILE_IDXS_LEN);
 		offset += FILE_IDXS_LEN;
@@ -178,8 +184,6 @@ int main(int argc, char* argv[]) {
 		if (check_sum != now_checksum) continue;
 		send_ack(sock, client_id, now_file, now_indx);
 
-		if (f[now_file].recv[now_indx]) continue;
-		
 		f[now_file].recv[now_indx] = 1;
 		f[now_file].max_indx = max_indx;
 		f[now_file].leng[now_indx] = dat_leng;
