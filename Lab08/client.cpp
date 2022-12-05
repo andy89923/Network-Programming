@@ -8,13 +8,8 @@
 #include <unistd.h>
 #include <sstream>
 #include <iomanip>
+#include "header.h"
 using namespace std;
-
-#define MAXFILE       1010
-#define MAX           3000
-#define SEG            256
-#define MAX_SENDSIZE  1500
-#define SENDSIZE      1080
 
 struct files {
 	int send[SEG], max_indx;
@@ -161,13 +156,12 @@ int main(int argc, char* argv[]) {
 	root_path = root_path + "/";
 	num_files = atoi(argv[2]);
 	
-	num_files = 440;
+	//num_files = NUM_FILES;
 
 	init();
 
 	int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	
-	#define TIMEOUT 10
     struct timeval tv;
     tv.tv_sec = 0;
     tv.tv_usec = TIMEOUT;
@@ -178,15 +172,17 @@ int main(int argc, char* argv[]) {
 	server_id.sin_port   = htons(atoi(argv[3]));
 	inet_pton(AF_INET, argv[4], &server_id.sin_addr);
 
+    int send_cnt = 0;
 	while (true) {
-		int send_cnt = 0;
+        send_cnt++;
+		bool flag = false;
 
 		for (int i = 0; i < num_files; i++) {
 			for (int j = 0; j < f[i].max_indx; j++) {
 				if (f[i].send[j]) continue;
 
 				memset(buf, 0, sizeof(buf));
-				send_cnt += 1;
+				flag = true;
 
 				send_data(sock, i, j, server_id);
 
@@ -194,8 +190,9 @@ int main(int argc, char* argv[]) {
 			}
 		}
 		
-		if (send_cnt == 0) break;
+		if (!flag) break;
 	}
+    cout << "total send count: " << send_cnt << '\n';
 
 	return 0;
 }

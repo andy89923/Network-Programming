@@ -8,13 +8,8 @@
 #include <unistd.h>
 #include <sstream>
 #include <iomanip>
+#include "header.h"
 using namespace std;
-
-#define MAXFILE       1010
-#define MAX           3000
-#define SEG            256
-#define MAX_SENDSIZE  1500
-#define SENDSIZE      1080
 
 void udp_socket(int& sock, sockaddr_in& server_id, int port) {
 	sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -124,7 +119,7 @@ int main(int argc, char* argv[]) {
 	root_path = root_path + "/";
 	num_files = atoi(argv[2]);
 		
-	num_files = 440;
+	//num_files = NUM_FILES;
 
 	init();
 
