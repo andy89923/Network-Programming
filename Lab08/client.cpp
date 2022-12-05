@@ -6,7 +6,6 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <unistd.h>
-#include <sstream>
 #include <iomanip>
 #include "header.h"
 using namespace std;
@@ -52,9 +51,9 @@ uint64_t cal_checksum(char* c, int len) {
 void init() {
 	int sum = 0;
 	for (int i = 0; i < num_files; i++) {
-		std::stringstream ss;
-		ss << std::setw(6) << std::setfill('0') << i;
-		f[i].name = ss.str();
+        char tmp[7];
+        snprintf(tmp, 7, "%06d", i);
+        f[i].name = tmp;
 
 		string now_path = root_path + f[i].name;
 
@@ -90,7 +89,15 @@ void init() {
 #define DATA_LENG_LEN 4
 #define ACK_LEN       16
 
+char* data_sent[MAXFILE][SEG] = {NULL};
+
 void send_data(int sock, int now_file, int now_indx, sockaddr_in &server_id) {
+    if (data_sent[now_file][now_indx]) {
+        sendto(sock, data_sent[now_file][now_indx], FILE_NAME_LEN + 3 * FILE_IDXS_LEN + 8, 0, (struct sockaddr*) &server_id, sizeof(server_id));
+    }
+
+    char* buf = (char*)malloc(MAX);
+    memset(buf, 0, MAX);
 	int offset = 0;
 	memcpy(buf + offset, &now_file, FILE_NAME_LEN);
 	offset += FILE_NAME_LEN;
@@ -113,6 +120,8 @@ void send_data(int sock, int now_file, int now_indx, sockaddr_in &server_id) {
 
 	memcpy(buf + offset, f[now_file].data[now_indx], f[now_file].leng[now_indx]);
 	offset += f[now_file].leng[now_indx];
+
+    data_sent[now_file][now_indx] = buf;
 
 	sendto(sock, buf, offset, 0, (struct sockaddr*) &server_id, sizeof(server_id));	
 }
@@ -138,7 +147,8 @@ void check_ack(int sock, sockaddr_in &server_id) {
     if (checksum != now_checksum) return;
 
     if (now_file < num_files && now_indx < f[now_file].max_indx) {
-    	f[now_file].send[now_indx] = 1;
+        f[now_file].send[now_indx] = 1;
+    }
 
     	// cout << "ACK " << now_file << ' ' << now_indx << '\n';
     }
@@ -167,20 +177,21 @@ int main(int argc, char* argv[]) {
     tv.tv_usec = TIMEOUT;
 	setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
 
-	struct sockaddr_in server_id;	
+	struct sockaddr_in server_id;
 	server_id.sin_family = AF_INET;
 	server_id.sin_port   = htons(atoi(argv[3]));
 	inet_pton(AF_INET, argv[4], &server_id.sin_addr);
 
+    int send_round_cnt = 0;
     int send_cnt = 0;
 	while (true) {
-        send_cnt++;
+        send_round_cnt++;
 		bool flag = false;
 
 		for (int i = 0; i < num_files; i++) {
 			for (int j = 0; j < f[i].max_indx; j++) {
 				if (f[i].send[j]) continue;
-
+                send_cnt++;
 				memset(buf, 0, sizeof(buf));
 				flag = true;
 
@@ -192,6 +203,7 @@ int main(int argc, char* argv[]) {
 		
 		if (!flag) break;
 	}
+    cout << "total send round count: " << send_round_cnt << '\n';
     cout << "total send count: " << send_cnt << '\n';
 
 	return 0;
