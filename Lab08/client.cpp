@@ -89,15 +89,20 @@ void init() {
 #define DATA_LENG_LEN 4
 #define ACK_LEN       16
 
-char* data_sent[MAXFILE][SEG] = {NULL};
+char* data_sent[MAXFILE][SEG] = { NULL };
+int data_sent_len[MAXFILE][SEG] = { 0 };
 
 void send_data(int sock, int now_file, int now_indx, sockaddr_in &server_id) {
-    if (data_sent[now_file][now_indx]) {
-        sendto(sock, data_sent[now_file][now_indx], FILE_NAME_LEN + 3 * FILE_IDXS_LEN + 8, 0, (struct sockaddr*) &server_id, sizeof(server_id));
+    if (data_sent_len[now_file][now_indx] > 0) {
+    	int len = data_sent_len[now_file][now_indx];
+        sendto(sock, data_sent[now_file][now_indx], len, 0, (struct sockaddr*) &server_id, sizeof(server_id));
+
+        return;
     }
 
-    char* buf = (char*)malloc(MAX);
+    char* buf = (char*) malloc(MAX);
     memset(buf, 0, MAX);
+
 	int offset = 0;
 	memcpy(buf + offset, &now_file, FILE_NAME_LEN);
 	offset += FILE_NAME_LEN;
@@ -122,6 +127,7 @@ void send_data(int sock, int now_file, int now_indx, sockaddr_in &server_id) {
 	offset += f[now_file].leng[now_indx];
 
     data_sent[now_file][now_indx] = buf;
+    data_sent_len[now_file][now_indx] = offset;
 
 	sendto(sock, buf, offset, 0, (struct sockaddr*) &server_id, sizeof(server_id));	
 }
@@ -148,7 +154,6 @@ void check_ack(int sock, sockaddr_in &server_id) {
 
     if (now_file < num_files && now_indx < f[now_file].max_indx) {
         f[now_file].send[now_indx] = 1;
-    }
 
     	// cout << "ACK " << now_file << ' ' << now_indx << '\n';
     }

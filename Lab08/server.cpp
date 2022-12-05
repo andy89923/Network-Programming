@@ -160,7 +160,7 @@ int main(int argc, char* argv[]) {
         if (now_file < MAXFILE && now_indx < SEG) {
             if (f[now_file].recv[now_indx]) {
                 send_ack(sock, client_id, now_file, now_indx);
-                //continue;
+                continue;
             }
         }
 
