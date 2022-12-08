@@ -9,7 +9,7 @@ using namespace std;
 #define agole a[go][le]
 #define pb push_back
 #define ppb pop_back
-#define MAX 1010
+#define MAX 5010
 
 static const char* socket_path = "/sudoku.sock";
 char buf[MAX];
@@ -73,18 +73,21 @@ void build() {
     }
 }
 
-void pri() {
+void pri(int sock) {
 	int cnt = 0;
 	for (int i = 1; i <= 9; i++) {
 		for (int k = 1; k <= 9; k++) {
 			if (in[cnt] == '.') {
 				cout << a[k][i];
 
-				string now = "S " + to_string(i) + " " + to_string(k);
+				string now = "V " + to_string(i - 1) + " " + to_string(k - 1) + " " + to_string(a[k][i]);
 				memset(buf, 0, sizeof(buf));
 				memcpy(buf, now.c_str(), now.length());
 
 				send(sock, buf, now.length() + 1, 0);
+				
+				memset(buf, 0, sizeof(buf));
+				int data_len = recv(sock, buf, MAX, 0);
 			}
 			else
 				cout << ".";
@@ -92,6 +95,7 @@ void pri() {
 			cnt += 1;
 		}
 	}
+	cout << '\n';
 }
 
 bool dfs(point fa, point now) {
@@ -119,13 +123,13 @@ bool dfs(point fa, point now) {
     return false;
 }
 
-void solve() {
+void solve(int sock) {
     point now, fa;
     fa.x = fa.y = 0;
     now = q.back();
     q.ppb();
     
-    if( dfs(fa, now) ) pri();
+    if( dfs(fa, now) ) pri(sock);
 }
 
 int main() {
@@ -153,19 +157,32 @@ int main() {
 
 	data_len = recv(sock, buf, MAX, 0);
 
-	cout << buf << '\n';
 	for (int i = 4; i < 4 + 81; i++) {
 		in[i - 4] = buf[i];
 	}
-	cout << in << '\n';
+	cout << buf << '\n';
+	cout << "Board: " << in << '\n';
 
 	build();
-	solve();
+	solve(sock);
 
 	memset(buf, 0, sizeof(buf));
 
+	// data_len = recv(sock, buf, MAX, 0);
+
+	// cout << buf << '\n';
+
+
+	memset(buf, 0, sizeof(buf));	
+	
+	now = "C";
+	memcpy(buf, now.c_str(), 1);
+	send(sock, buf, 2, 0);
+
+	memset(buf, 0, sizeof(buf));
 	data_len = recv(sock, buf, MAX, 0);
 
 	cout << buf << '\n';
+
 	return 0;
 }
