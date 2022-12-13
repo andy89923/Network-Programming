@@ -6,7 +6,7 @@
 #define NUM_FILE  1010
 #define TIMEOUT      5
 #define ACK_LEN     10
-#define RECV_SIZ 25000
+#define RECV_SIZ 30000
 
 struct File {
 

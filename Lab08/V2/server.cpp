@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <iomanip>
+#include <signal.h>
 using namespace std;
 
 #include "header.h"
@@ -39,7 +40,9 @@ void output_file(int i) {
 }
 
 char ack[ACK_LEN];
-void send_ack(int sock, sockaddr_in& client_id, int now_file, int now_indx) {
+int sock;
+struct sockaddr_in client_id;
+void send_ack(int now_file, int now_indx) {
 	memset(ack, 0, sizeof(ack));
 
 	int now_idx = now_file * 10000 + now_indx;
@@ -53,15 +56,19 @@ void send_ack(int sock, sockaddr_in& client_id, int now_file, int now_indx) {
 		sendto(sock, ack, 9, 0, (struct sockaddr*) &client_id, sizeof(client_id));
 }
 
-
-void send_all_ack(int sock, sockaddr_in& client_id) {
+void send_all_ack() {
 	for (int i = 0; i < num_file; i++) {
 		int t = (f[i].max_indx == 0x3f3f3f3f ? 32 : f[i].max_indx);
 
 		for (int j = 0; j < t; j++) if (f[i].send[j]) {
-			send_ack(sock, client_id, i, j);
+			send_ack(i, j);
 		}
 	}
+}
+
+void alarm_handle(int sig) {
+    send_all_ack();
+    alarm(2);
 }
 
 // /server <path-to-store-files> <total-number-of-files> <port>
@@ -76,18 +83,18 @@ int main(int argc, char* argv[]) {
 
 	init();
 
-	int sock;
 	int listen_port = atoi(argv[3]);
 	struct sockaddr_in server_id;
 
 	// socket 
 	udp_socket(sock, server_id, listen_port);
 
-	struct sockaddr_in client_id;
 	bzero(&client_id, sizeof(client_id));
 	socklen_t csinlen = sizeof(client_id);
 
 	int output_file_cnt = 0;
+    signal(SIGALRM, alarm_handle);
+    alarm(1);
 	while (true) {
 		memset(buf, 0, sizeof(buf));
 
@@ -116,10 +123,11 @@ int main(int argc, char* argv[]) {
 		if (dat_leng != rlen) continue;
 		
 		if (f[now_file].send[now_indx]) {
+		    send_ack(now_file, now_indx);
 			// send_all_ack(sock, client_id);
 			continue;
 		}
-		send_ack(sock, client_id, now_file, now_indx);	
+		send_ack(now_file, now_indx);	
 
 		f[now_file].send[now_indx] = 1;
 		f[now_file].leng[now_indx] = dat_leng - 16;
@@ -136,7 +144,7 @@ int main(int argc, char* argv[]) {
 		if (output_file_cnt == num_file) break;
 	}
 	while (true)
-		send_ack(sock, client_id, 1001, 1001);
+		send_ack(1001, 1001);
 
 
 	return 0;
