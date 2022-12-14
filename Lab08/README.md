@@ -77,7 +77,7 @@ If everything is correct. You should see messages like those in the below screen
 
 - After the client is terminated, the challenge server checks the files on the server side. Since we did not perform any file transmission, all the checks failed, and the final success rate was zero.
 
-![submit-udpecho-ping](https://inp111.zoolab.org/lab08/submit-udpecho-ping.png)
+![submit-udpecho-ping](./submit.png)
 
 
 ## Demonstration
