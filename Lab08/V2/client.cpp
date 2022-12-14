@@ -37,21 +37,19 @@ void load_file() {
 
 			int now_fid = i * 10000 + j;
 
-			memcpy(f[i].data[j] +  0, &now_fid, 4);
-			memcpy(f[i].data[j] + 16, buf, len);
+			memcpy(f[i].data[j] + 0, &now_fid, 4);
+			memcpy(f[i].data[j] + 8, buf, len);
 
 			sum += len;
 			cnt += 1;
 
-			f[i].leng[j] = len + 16;
+			f[i].leng[j] = len + 8;
 		}
 		f[i].max_indx = cnt;
 		for (int j = 0; j < cnt; j++) {
 			int now_idx = cnt * 10000 + f[i].leng[j];
-			memcpy(f[i].data[j] + 4, &now_idx, 4);
 
-			uint64_t checksum = cal_checksum(f[i].data[j], f[i].leng[j]);
-			memcpy(f[i].data[j] + 8, &checksum, 8);
+			memcpy(f[i].data[j] + 4, &now_idx, 4);
 		}
 		file.close();
 	}
@@ -83,19 +81,13 @@ void check_ack(int sock, sockaddr_in &server_id) {
 
 	    int now_idx, nxt_idx;
 	    memcpy(&now_idx, ack + 0, 4);
-	    memcpy(&nxt_idx, ack + 4, 4);
-
-	    if (now_idx != nxt_idx) return;
 
 	    int now_file = now_idx / 10000;
 	    int now_indx = now_idx % 10000;
 
 	    if (now_file == 1001 && now_indx == 1001) exit(0);
 
-		if (!f[now_file].send[now_indx]) ack_cnt += 1;
 		f[now_file].send[now_indx] = 1;
-
-		// cout << "ACK " << now_file << ' ' << now_indx << '\n';
 	}
 }
 
@@ -105,7 +97,6 @@ int main(int argc, char* argv[]) {
 		cout << "Usage: /client <path-to-read-files> <total-number-of-files> <port> <server-ip-address>\n";
 		exit(1);
 	}
-	time_t start = time(NULL);
 
 	rot_path = argv[1]; 
 	num_file = atoi(argv[2]);
@@ -128,15 +119,12 @@ int main(int argc, char* argv[]) {
 	inet_pton(AF_INET, argv[4], &server_id.sin_addr);
 	socklen_t addr_len = sizeof(server_id);
 
-	int send_round_cnt = 0;
-	int send_cnt = 0, flag = 0;
+	int flag = 0;
 	do {
-		send_round_cnt += 1;
-		flag = 0;
 
+		flag = 0;
 		for (int i = 0; i < num_file; i++) {
 			for (int j = 0; j < f[i].max_indx; j++) if (!f[i].send[j]) {
-				send_cnt += 1;
 				flag = 1;
 
 				sendto(sock, f[i].data[j], f[i].leng[j], 0,  (struct sockaddr*) &server_id, addr_len);	
@@ -145,12 +133,6 @@ int main(int argc, char* argv[]) {
 		check_ack(sock, server_id);
 		
 	} while (flag);
-
-	cout << "\n\n";
-	cout << "Total send round count: " << send_round_cnt << '\n';
-	cout << "Total send count: " << send_cnt << '\n';
-	cout << "Total acks count: " << ack_cnt << '\n';
-	cout << "\n";
 
 	return 0;
 }

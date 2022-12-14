@@ -1,12 +1,12 @@
 
 #define MAX_SED   1080
-#define MAX_PKT   1200
-#define MAX_BUF   3000
-#define SEG         40
-#define NUM_FILE  1010
+#define MAX_PKT   1100
+#define MAX_BUF   1110
+#define SEG         35
+#define NUM_FILE  1005
 #define TIMEOUT      5
-#define ACK_LEN     10
-#define RECV_SIZ 30000
+#define ACK_LEN      5
+#define RECV_SIZ 20000
 
 struct File {
 
@@ -43,7 +43,6 @@ void udp_socket(int& sock, sockaddr_in& server_id, int port) {
     setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &opt, optlen);
     setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, &opt, optlen);
 
-
 	int recv_siz = RECV_SIZ;
 	setsockopt(sock, SOL_SOCKET, SO_RCVBUF, &recv_siz, sizeof(recv_siz));
     
@@ -56,25 +55,4 @@ void udp_socket(int& sock, sockaddr_in& server_id, int port) {
 		cout << "Error on bind!\n";
 		exit(1);
 	}
-}
-
-uint64_t cal_checksum(char* c, int len) {
-	uint64_t checksum = 0, now = 0;
-
-	for (int j = 0; j < len; j++) {
-		now <<= 8;	
-		now += (uint64_t) c[j];
-
-		if (j != 0 && j % 8 == 7) {
-			checksum = checksum ^ now;
-			now = 0;
-		}
-	}
-	if (len % 8 != 0) {
-		for (int j = 0; j < 8 - (len % 8); j++) {
-			now <<= 8;	
-		}
-	}
-	checksum = checksum ^ now;
-	return checksum;
 }
