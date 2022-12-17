@@ -110,22 +110,22 @@ Suppose the server receives quires from UDP port 1053 on localhost, and the IP a
 $ dig @<server_ip> -p <port> <domainname in its domain>
 ```
 
-![](./uploads/upload_dc139c893121d68eb96dabce8528cc98.PNG)
+![](./uploads/upload_dc139c893121d68eb96dabce8528cc98.png)
 
-![](./uploads/upload_ff7f720ffc62d8d0734e0831a1631ea4.PNG)
+![](./uploads/upload_ff7f720ffc62d8d0734e0831a1631ea4.png)
     
-![](./uploads/upload_d51da9f6e8613f35cf69d85be3aea518.PNG)
+![](./uploads/upload_d51da9f6e8613f35cf69d85be3aea518.png)
 
-![](./uploads/upload_2fe3bd665aa0016628ea270389439791.PNG)
+![](./uploads/upload_2fe3bd665aa0016628ea270389439791.png)
 
 :::danger
 **Note**: Since we do not define any information about "localhost" in the config file, the query is forwarded to the foreign name server when we query for the IP address of localhost.
 
 * Foreign name server IP: 8.8.8.8
-![](./uploads/upload_ecdac86410383fbc79ba74725c4e772d.PNG)
+![](./uploads/upload_ecdac86410383fbc79ba74725c4e772d.png)
 
 * Foreign name server IP: 127.0.0.53
-![](./uploads/upload_0407593d6232e6447f284b0ed40a313e.PNG)
+![](./uploads/upload_0407593d6232e6447f284b0ed40a313e.png)
 
 :::
 
@@ -133,52 +133,52 @@ $ dig @<server_ip> -p <port> <domainname in its domain>
 $ dig @<server_ip> -p <port> <domainname not in its domain>
 ```
 
-![](./uploads/upload_273f994f0345d779a2a026bd4a77ce7c.PNG)
+![](./uploads/upload_273f994f0345d779a2a026bd4a77ce7c.png)
 
 
 ```
 $ dig @<server_ip> -p <port> <domainname not in its domain> A
 ```
 
-![](./uploads/upload_e795aaccb29f7f3835c6a974d6154c44.PNG)
+![](./uploads/upload_e795aaccb29f7f3835c6a974d6154c44.png)
 
 
 ```
 $ dig @<server_ip> -p <port> <domainname not in its domain> AAAA
 ```
 
-![](./uploads/upload_d50aa9c2b561483b3156285f00415fb7.PNG)
+![](./uploads/upload_d50aa9c2b561483b3156285f00415fb7.png)
 
 ```
 $ dig @<server_ip> -p <port> <domainname not in its domain> NS
 ```
 
-![](./uploads/upload_6cc11aa429a7a9ea6b9346e629d3e0ef.PNG)
+![](./uploads/upload_6cc11aa429a7a9ea6b9346e629d3e0ef.png)
 
 ```
 $ dig @<server_ip> -p <port> <domainname not in its domain> CNAME
 ```
 
-![](./uploads/upload_ccaace14576362510fe86c5a1451874c.PNG)
+![](./uploads/upload_ccaace14576362510fe86c5a1451874c.png)
 
 ```
 $ dig @<server_ip> -p <port> <domainname not in its domain> SOA
 ```
 
-![](./uploads/upload_de6037e91f158374187f29d9b2ed9ca2.PNG)
+![](./uploads/upload_de6037e91f158374187f29d9b2ed9ca2.png)
 
 
 ```
 $ dig @<server_ip> -p <port> <domainname not in its domain> MX
 ```
 
-![](./uploads/upload_71811168747c43aab50eb0fc9a617739.PNG)
+![](./uploads/upload_71811168747c43aab50eb0fc9a617739.png)
 
 ```
 $ dig @<server_ip> -p <port> <domainname not in its domain> TXT
 ```
 
-![](./uploads/upload_c4ea5eeb13414973bba04fb9e41efb23.PNG)
+![](./uploads/upload_c4ea5eeb13414973bba04fb9e41efb23.png)
 
 :::success
 You can play with our server with the dig commands:
