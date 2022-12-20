@@ -8,18 +8,47 @@ using namespace std;
 #define DNS_PORT   53
 
 
-string type_to_str[17] = { "", 
+string typ_to_str[17] = { "", 
 	"A",    "NS", "MD", "MF", "CNAME",    //  1 -  5
 	"SOA",  "MB", "MG", "MR", "NULL",     //  6 - 10
 	"WKS", "PTR", "HINFO", "MINFO", "MX", // 11 - 15
 	"TXT" 
 };
 
+int str_to_typ(string now) {
+	for (int i = 1; i <= 16; i++) {
+		if (typ_to_str[i] == now) return i;
+	}
+	return -1;
+}
+/*
+<domain>
+<NAME>,<TTL>,<CLASS>,<TYPE>,<RDATA>
+<NAME>,<TTL>,<CLASS>,<TYPE>,<RDATA>
+
+<RDATA>
+A     : <ADDRESS>
+AAAA  : <ADDRESS>
+NS    : <NSDNAME>
+CNAME : <CNAME>
+SOA   : <MNAME> <RNAME> <SERIAL> <REFRESH> <RETRY> <EXPIRE> <MINIMUM>
+MX    : <PREFERENCE> <EXCHANGE>
+TXT   : <TXT-DATA>
+
+@,   3600, IN, MX, 10 mail.example1.org.
+dns, 3600, IN, A,  140.113.123.1
+www, 300 , IN, A,  140.113.123.80
+*/
+
 struct Record {
 
-	string name;
+	string name, clss;
+	int ttl, typ;
+	vector<string> data;
 
-	int ttl, type;
+	void clear() {
+		data.clear();
+	}
 };
 
 struct Zone {
@@ -29,17 +58,54 @@ struct Zone {
 
 	void init() {
 		v.clear();
-
-		
 	}
 
 	void setup(string name, string path) {
 		this -> init();
 		this -> name = name;
 
+		ifstream file;
+		file.open(path);
 
+		char now[2000] = {};
+		char delimeter[] = ",";
 
+		file >> now; // zone name
+		file.getline(now, 200);
 
+		int ttl, typn;
+
+		while (file.getline(now, 200)) {
+			Record r; r.clear();
+
+			char* tmp = strtok(now, delimeter);
+
+			r.name = tmp;
+
+			tmp = strtok(NULL, delimeter);
+			r.ttl = atoi(tmp);
+
+			tmp = strtok(NULL, delimeter);
+			r.clss = tmp;
+
+			tmp = strtok(NULL, delimeter);
+			r.typ = str_to_typ(tmp);
+
+			// cout << r.name << ' ' << r.ttl << ' ' << r.clss << ' ' << r.typ << "\n  data = ";
+
+			tmp = strtok(NULL, "\n");
+			while (tmp) {
+				r.data.push_back(tmp);
+				tmp = strtok(NULL, "\n");
+			}
+
+			// for (auto i : r.data)
+			// 	cout << i << ' ';
+			// cout << '\n';
+
+			v.push_back(r);
+		}
+		file.close();
 	}
 };
 

@@ -1,7 +1,7 @@
 # INP111 Homework 02 Week #15 (2022-12-15)
 
 Date: 2022-12-15
-<span style="color:red">Due Date: 2022-01-05</span>
+<span style="color:red">Due Date: 2023-01-05</span>
 
 [TOC]
 
@@ -74,8 +74,8 @@ The format of a zone file containing records of a domain is defined as follows.
 
 ```
 <domain>
-<NAME>,<TTL>,<TYPE>,<CLASS>,<RDATA>
-<NAME>,<TTL>,<TYPE>,<CLASS>,<RDATA>
+<NAME>,<TTL>,<CLASS>,<TYPE>,<RDATA>
+<NAME>,<TTL>,<CLASS>,<TYPE>,<RDATA>
 ...
 ```
 
