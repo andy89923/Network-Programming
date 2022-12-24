@@ -47,7 +47,10 @@ int main(int argc, char const *argv[]) {
 	server_id.sin_port = htons(12345);
 	bind(sock, (sockaddr*) &server_id, sizeof(sockaddr_in));
 
-
+	struct sockaddr_in client_id;
+	bzero(&client_id, sizeof(client_id));
+	socklen_t csinlen = sizeof(client_id);
+	
 	int output_file_cnt = 0;
 	while (true) {
 		memset(buf, 0, sizeof(buf));
@@ -68,7 +71,6 @@ int main(int argc, char const *argv[]) {
 		int max_indx = now_idx / 10000;
 		int dat_leng = now_idx % 10000;
 
-		f[now_file].send[now_indx] = 1;
 		f[now_file].leng[now_indx] = dat_leng - 8;
 		memcpy(f[now_file].data[now_indx], data + 8, dat_leng - 8);
 

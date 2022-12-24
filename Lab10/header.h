@@ -13,6 +13,8 @@ using namespace std;
 #define TIMEOUT      5
 #define ACK_LEN      5
 #define RECV_SIZ 30000
+#define MAX_MTU   1500
+#define APP_PORT 12388
 
 struct File {
 
@@ -33,6 +35,8 @@ struct File {
 	}
 };
 
+int datagram[MAX_MTU];
+
 void raw_socket(int& sock_r) {
     sock_r = socket(AF_INET, SOCK_RAW, 161);
     
@@ -52,6 +56,14 @@ void raw_socket(int& sock_r) {
     } else
         cout << "Success to set IP_HDRINCL\n";
 }
+
+struct pshdr {
+    u_int32_t saddr;
+    u_int32_t daddr;
+    u_int8_t filler;
+    u_int8_t protocol;
+    u_int16_t len;
+};
 
 unsigned short checksum(unsigned short *buf, int len){
     unsigned long sum = 0xffff;
