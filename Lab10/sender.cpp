@@ -4,7 +4,7 @@ using namespace std;
 
 char buf[MAX_BUF];
 File f[NUM_FILE];
-
+char datagram[MAX_MTU];
 string rot_path;
 int num_file;
 
@@ -16,8 +16,8 @@ void construct_ip_hdr(struct iphdr* ip, int tot_len, char* source_ip) {
 	ip -> id       = htonl(rand());
 	ip -> frag_off = 0;
 	ip -> ttl      = 64;
-	ip -> protocol = IPPROTO_UDP;
-	// ip -> protocol = 161;
+	// ip -> protocol = IPPROTO_UDP;
+	ip -> protocol = 161;
 	ip -> check    = 0;
 	ip -> saddr    = inet_addr(source_ip); // let sandbox get the broadcast packet
 	ip -> daddr    = inet_addr(source_ip);
@@ -66,7 +66,7 @@ void load_file() {
 		}
 		file.close();
 
-		cout << f[i].name << ' ' << sum << '\n';
+		// cout << f[i].name << ' ' << sum << '\n';
 	}
 }
 
@@ -117,7 +117,7 @@ int main(int argc, char const *argv[]) {
 
 			// UDP header
 			int udp_data_len = sizeof(struct udphdr) + f[i].leng[j];
-			construct_udp_hdr(udp_header, udp_data_len, APP_PORT);
+			construct_udp_hdr(udp_header, udp_data_len, 6666);
 
 			int tmp_len = sizeof(struct udphdr) + f[i].leng[j];
 
@@ -139,12 +139,7 @@ int main(int argc, char const *argv[]) {
 
 			int k = sendto(sock, datagram, ip_header -> tot_len, 0,  (struct sockaddr*) &server_id, sizeof(server_id));
 
-			cout << "Send "<< k << ' ' << f[i].leng[j] << '\n';
-			cout << ip_header -> check << '\n';
-			cout << udp_header -> check << '\n';
-			for (int t = 0; t < k; t++) cout << datagram[t];
-			cout << '\n';
-			return 0;
+			sleep(0.1);
 		}	
 	}
 	sleep(2);

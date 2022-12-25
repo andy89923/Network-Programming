@@ -36,11 +36,9 @@ struct File {
 	}
 };
 
-int datagram[MAX_MTU];
-
 void raw_socket(int& sock_r) {
-    // sock_r = socket(AF_INET, SOCK_RAW, 161);
-    sock_r = socket(AF_INET, SOCK_RAW, IPPROTO_UDP);
+    sock_r = socket(AF_INET, SOCK_RAW, 161);
+    // sock_r = socket(AF_INET, SOCK_RAW, IPPROTO_UDP);
     
     const int opt = true;
     socklen_t optlen = sizeof(opt);

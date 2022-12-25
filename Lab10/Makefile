@@ -1,6 +1,6 @@
 CPP = g++
 CPP_FLAG = -static -O3 -Ofast 
-BROADCAST = 172.20.255.255
+BROADCAST = 192.168.253.255
 
 all: server client
 
