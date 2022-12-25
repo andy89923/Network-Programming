@@ -8,7 +8,7 @@ File f[NUM_FILE];
 string rot_path;
 int num_file;
 
-void construct_ip_hdr(struct iphdr* ip, int tot_len, char* source_ip, sockaddr_in addr) {
+void construct_ip_hdr(struct iphdr* ip, int tot_len, char* source_ip) {
 	ip -> version  = 4;
 	ip -> ihl      = 5;
 	ip -> tos      = 0;
@@ -19,8 +19,8 @@ void construct_ip_hdr(struct iphdr* ip, int tot_len, char* source_ip, sockaddr_i
 	ip -> protocol = IPPROTO_UDP;
 	// ip -> protocol = 161;
 	ip -> check    = 0;
-	ip -> saddr    = addr.sin_addr.s_addr; // let sandbox get the broadcast packet
-	ip -> daddr    = addr.sin_addr.s_addr;
+	ip -> saddr    = inet_addr(source_ip); // let sandbox get the broadcast packet
+	ip -> daddr    = inet_addr(source_ip);
 }
 
 void construct_udp_hdr(udphdr *u, int udp_len, int source_port) {
@@ -65,6 +65,8 @@ void load_file() {
 			memcpy(f[i].data[j] + 4, &now_idx, 4);
 		}
 		file.close();
+
+		cout << f[i].name << ' ' << sum << '\n';
 	}
 }
 
@@ -90,25 +92,32 @@ int main(int argc, char const *argv[]) {
 	int broadcast = 1;
   	setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof(broadcast));
 
+	struct sockaddr_in server_id;
+	server_id.sin_family = AF_INET;
+	server_id.sin_port   = htons(APP_PORT);
+	inet_pton(AF_INET, argv[3], &server_id.sin_addr);
+	socklen_t addr_len = sizeof(server_id);
+
 
 	for (int i = 0; i < num_file; i++) {
 		for (int j = 0; j < f[i].max_indx; j++) {
 			memset(datagram, 0, sizeof(datagram));
 
-			char* payload = datagram + sizeof(iphdr) + sizeof(udphdr);
-			memcpy(data, f[i].data[j], f[i].leng[j]);
+			char* payload = (char*) (datagram + sizeof(iphdr) + sizeof(udphdr));
+			memcpy(payload, f[i].data[j], f[i].leng[j]);
 
 			struct iphdr  *ip_header  = (struct iphdr* ) (datagram);
 			struct udphdr *udp_header = (struct udphdr*) (datagram + sizeof(struct iphdr)); 
     
    			int tot_len = sizeof(struct iphdr) + sizeof(struct udphdr) + f[i].leng[j];
-
-			construct_ip_hdr(ip_header, tot_len, source_ip, addr);
+					
+			char* src_ip = (char*) argv[3];
+			construct_ip_hdr(ip_header, tot_len, src_ip);
 			ip_header -> check = checksum((unsigned short*) datagram, ip_header -> tot_len);
 
 			// UDP header
 			int udp_data_len = sizeof(struct udphdr) + f[i].leng[j];
-			construct_udp_hdr(udp_header, udp_data_len, 12345);
+			construct_udp_hdr(udp_header, udp_data_len, APP_PORT);
 
 			int tmp_len = sizeof(struct udphdr) + f[i].leng[j];
 
@@ -128,10 +137,18 @@ int main(int argc, char const *argv[]) {
 			// UDP checksum
 			udp_header -> check = checksum((unsigned short*) psgram, siz);
 
-			sendto(sock, datagram, ip_header -> tot_len, 0,  (struct sockaddr*) &addr, sizeof(addr));	
+			int k = sendto(sock, datagram, ip_header -> tot_len, 0,  (struct sockaddr*) &server_id, sizeof(server_id));
+
+			cout << "Send "<< k << ' ' << f[i].leng[j] << '\n';
+			cout << ip_header -> check << '\n';
+			cout << udp_header -> check << '\n';
+			for (int t = 0; t < k; t++) cout << datagram[t];
+			cout << '\n';
+			return 0;
 		}	
 	}
 	sleep(2);
 
 	return 0;
 }
+

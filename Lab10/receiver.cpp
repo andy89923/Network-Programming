@@ -44,7 +44,7 @@ int main(int argc, char const *argv[]) {
 	bzero(&server_id, sizeof(server_id));
 
 	server_id.sin_family = AF_INET;
-	server_id.sin_port = htons(12345);
+	server_id.sin_port = htons(APP_PORT);
 	bind(sock, (sockaddr*) &server_id, sizeof(sockaddr_in));
 
 	struct sockaddr_in client_id;
@@ -60,7 +60,18 @@ int main(int argc, char const *argv[]) {
 			perror("recvfrom");
 			break;
 		}
-		char* data = buf + sizeof(iphdr);
+		cout << rlen << " recv something!\n";
+		cout << buf << '\n';
+
+		char* data = buf + sizeof(iphdr) + sizeof(udphdr);
+		
+		struct iphdr *ip_header = (iphdr*) buf;
+		struct udphdr *udp_header = (struct udphdr*) (buf + sizeof(struct iphdr)); 
+
+		cout << "IP CHECK " << ip_header -> check << '\n';
+		cout << "UDP Check " << udp_header -> check << '\n';
+		for (int k = 0; k < rlen; k++) cout << buf[k];
+		cout << '\n';
 
 		int now_fid, now_idx;
 		memcpy(&now_fid, data + 0, 4);
@@ -70,6 +81,8 @@ int main(int argc, char const *argv[]) {
 		int now_indx = now_fid % 10000;
 		int max_indx = now_idx / 10000;
 		int dat_leng = now_idx % 10000;
+
+		cout << now_file << ' ' << dat_leng << '\n';
 
 		f[now_file].leng[now_indx] = dat_leng - 8;
 		memcpy(f[now_file].data[now_indx], data + 8, dat_leng - 8);

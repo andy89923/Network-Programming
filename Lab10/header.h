@@ -3,11 +3,12 @@
 #include <arpa/inet.h>    // inet_addr
 #include <netinet/ip.h>   // Provides declarations for ip header
 #include <netinet/udp.h>  // Provides declarations for udp header
+#include <unistd.h>
 using namespace std;
 
 #define MAX_SED   1160
 #define MAX_PKT   1300
-#define MAX_BUF   1400
+#define MAX_BUF   1500
 #define SEG         40
 #define NUM_FILE  1005
 #define TIMEOUT      5
@@ -38,12 +39,16 @@ struct File {
 int datagram[MAX_MTU];
 
 void raw_socket(int& sock_r) {
-    sock_r = socket(AF_INET, SOCK_RAW, 161);
+    // sock_r = socket(AF_INET, SOCK_RAW, 161);
+    sock_r = socket(AF_INET, SOCK_RAW, IPPROTO_UDP);
     
     const int opt = true;
     socklen_t optlen = sizeof(opt);
     setsockopt(sock_r, SOL_SOCKET, SO_REUSEADDR, &opt, optlen);
     setsockopt(sock_r, SOL_SOCKET, SO_REUSEPORT, &opt, optlen);
+
+	int broadcast = 1;
+  	setsockopt(sock_r, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof(broadcast));
 
     if (sock_r < 0) {
         cout << "Error on socket init!\n";
