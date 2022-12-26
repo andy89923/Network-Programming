@@ -1,9 +1,11 @@
 #include <bits/stdc++.h>
 #include "header.h"
+#include "handler.cpp"
 using namespace std;
 
 char buf[MAXBUF];
 struct sockaddr_in dns_server;
+int listen_port;
 vector<Zone> v;
 
 void server_setup(const char* path) {
@@ -45,8 +47,10 @@ void server_setup(const char* path) {
 	cout << "==== DNS Server Settings ====\n";
 	cout << "=============================\n";
 
-	cout << "Forward DNS Server: " << dns_ip << '\n';
-	cout << "Number of Zones   : " << zone_cnt << '\n';
+	cout << "Forward DNS Server: " << dns_ip      << '\n';
+	cout << "Number of Zones   : " << zone_cnt    << '\n';
+	cout << "Listen on port    : " << listen_port << '\n';
+
 	cout << "=============================\n";
 
 	cout << "Zones:\n";
@@ -65,7 +69,7 @@ int main(int argc, char const *argv[]) {
 	}
 
 	int sock;
-	int listen_port = atoi(argv[1]);
+	listen_port = atoi(argv[1]);
 	struct sockaddr_in server_id, client_id;
 	bzero(&client_id, sizeof(client_id));
 	socklen_t csinlen = sizeof(client_id);
@@ -75,11 +79,15 @@ int main(int argc, char const *argv[]) {
 	server_setup(argv[2]);
 
 	while (true) {
-		break;
+		memset(buf, 0, sizeof(buf));
 
+		int rlen;
+		if ((rlen = recvfrom(sock, buf, sizeof(buf), 0, (struct sockaddr*) &client_id, &csinlen)) < 0) {
+			perror("recvfrom");
+			break;
+		}
 
-
+		handler(buf, rlen, client_id, v);
 	}
-
 	return 0;
 }

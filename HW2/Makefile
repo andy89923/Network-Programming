@@ -1,7 +1,7 @@
 CPP = g++-7
 CPP_FLAG = -O2 -std=c++11
 FILE = server.cpp
-INCLUDE = header.h
+INCLUDE = header.h handler.cpp dns.h
 
 all: dns
 

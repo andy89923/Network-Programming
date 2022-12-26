@@ -1,5 +1,6 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
+#include <netinet/udp.h>  // Provides declarations for udp header
 #include <iostream>
 using namespace std;
 
@@ -91,7 +92,7 @@ struct Zone {
 			tmp = strtok(NULL, delimeter);
 			r.typ = str_to_typ(tmp);
 
-			// cout << r.name << ' ' << r.ttl << ' ' << r.clss << ' ' << r.typ << "\n  data = ";
+			// cout << r.name << ' ' << r.ttl << ' ' << r.clss << ' ' << r.typ << "\n";
 
 			tmp = strtok(NULL, "\n");
 			while (tmp) {
