@@ -122,9 +122,29 @@ int handler(char* buf, char* rbuf, int rlen, vector<Zone>& v, sockaddr_in dns_se
 					if (g_debug) cout << "  => Found " << now_r << " <-> " << q.s << '\n';
 					
 					ans.push_back(&r);
+					continue;
+				}
+				if (r.name == "") ans.push_back(&r);
+			}
+			if (ans.size() == 0) {
+				aut.push_back(&z.v[0]); // SOA record
+			} else {
+				for (auto& r : z.v) if (r.typ == 2 && q.qtype != 2) {	
+					aut.push_back(&r);
 				}
 			}
-			if (ans.size() == 0) aut.push_back(&z.v[0]); // SOA record
+			if (q.qtype == 2 or q.qtype == 15) { // NS & MX
+				for (auto& r : z.v) if (r.typ == 1) {
+					for (auto i : ans) {
+						string ss = r.name + "." + z.name;
+						// cout << "-" << ss << "-  -" << (i -> data[(q.qtype == 2 ? 0 : 1)]) << "- \n";
+						if (ss == (i -> data[(q.qtype == 2 ? 0 : 1)])) {
+							add.push_back(&r);
+						}
+					}
+
+				}
+			}
 
 			dnshdr* h = (dnshdr*) rbuf;
 			dnshdr* dns_header = (dnshdr*) buf;
