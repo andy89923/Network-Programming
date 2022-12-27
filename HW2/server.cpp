@@ -3,7 +3,7 @@
 #include "handler.cpp"
 using namespace std;
 
-char buf[MAXBUF];
+char buf[MAXBUF], rbuf[MAXBUF];
 struct sockaddr_in dns_server;
 int listen_port;
 vector<Zone> v;
@@ -42,7 +42,6 @@ void server_setup(const char* path) {
 	}	
 	file.close();
 
-
 	cout << "=============================\n";
 	cout << "==== DNS Server Settings ====\n";
 	cout << "=============================\n";
@@ -58,7 +57,7 @@ void server_setup(const char* path) {
 	for (int i = 0; i < zone_cnt; i++) {
 		cout << "(" << i << ") " << v[i].name << '\n';
 	}
-	cout << "=============================\n\n";
+	cout << "=============================\n";
 }
 
 // ./dns <port-number> <path/to/the/config/file>
@@ -67,7 +66,8 @@ int main(int argc, char const *argv[]) {
 		cout << "Usage: ./dns <port-number> <path/to/the/config/file>\n";
 		exit(1);
 	}
-
+	system("clear");
+	
 	int sock;
 	listen_port = atoi(argv[1]);
 	struct sockaddr_in server_id, client_id;
@@ -79,7 +79,8 @@ int main(int argc, char const *argv[]) {
 	server_setup(argv[2]);
 
 	while (true) {
-		memset(buf, 0, sizeof(buf));
+		memset( buf, 0, sizeof( buf));
+		memset(rbuf, 0, sizeof(rbuf));
 
 		int rlen;
 		if ((rlen = recvfrom(sock, buf, sizeof(buf), 0, (struct sockaddr*) &client_id, &csinlen)) < 0) {
@@ -87,7 +88,9 @@ int main(int argc, char const *argv[]) {
 			break;
 		}
 
-		handler(buf, rlen, client_id, v);
+		int flen = handler(buf, rbuf, rlen, v, dns_server);
+
+		sendto(sock, rbuf, flen, 0, (struct sockaddr*) &client_id, csinlen);
 	}
 	return 0;
 }

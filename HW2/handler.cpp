@@ -2,9 +2,12 @@
 #include "dns.h"
 using namespace std;
 
+bool g_debug = false;
 
 query parse_query(char* b, bool debug = false) {
 	dnshdr* dns_header = (dnshdr*) b;
+
+	if (debug != g_debug) g_debug = debug;
 
 	query q;
 	q.name   = (char*) (b + sizeof(dnshdr));
@@ -15,9 +18,10 @@ query parse_query(char* b, bool debug = false) {
 	q.qtype = ntohs(q.qtype);
 	q.qclass = ntohs(q.qclass);
 
-	if (debug) {
+	if (g_debug) {
+		cout << "\n";
 		cout << "Get query\n";
-		cout << "   id  : " << dns_header -> id << '\n';
+		cout << "   id  : 0x" << hex << ntohs(dns_header -> id) << '\n';
 		cout << "   name: ";
 	}
 
@@ -32,7 +36,7 @@ query parse_query(char* b, bool debug = false) {
 	}
 	q.s += ".";
 
-	if (debug) {
+	if (g_debug) {
 		cout << q.s << '\n';
 		cout << "   type: " << q.qtype  << '\n';
 		cout << "  class: " << q.qclass << '\n';
@@ -41,11 +45,38 @@ query parse_query(char* b, bool debug = false) {
 	return q;
 }
 
-void forward_dns() {
+int forward_sock = -1;
+struct sockaddr_in server_id;
+
+int forward_dns(char* buf, char* rbuf, int rlen, sockaddr_in dns_server) {
+
+	if (g_debug)
+		cout << " --> forwarding...  ";
+
+	if (forward_sock == -1) {
+		udp_socket(forward_sock, server_id, 12000);
+	}	
+
+	sendto(forward_sock, buf, rlen, 0, (struct sockaddr*) &dns_server, sizeof(dns_server));
+
+	struct sockaddr_in server_id, client_id;
+	bzero(&client_id, sizeof(client_id));
+	socklen_t csinlen = sizeof(client_id);
+
+	int flen;
+	if ((flen = recvfrom(forward_sock, rbuf, MAXBUF, 0, (struct sockaddr*) &client_id, &csinlen)) < 0) {
+		perror("recvfrom");
+		exit(1);
+	}
+	if (g_debug)
+		cout << dec << "reply len = " << flen << "\n";
+
+	return flen;
 }
 
-void handler(char* buf, int rlen, struct sockaddr_in& client_id, vector<Zone>& v) {
+int handler(char* buf, char* rbuf, int rlen, vector<Zone>& v, sockaddr_in dns_server) {
 	query q = parse_query(buf, true);
+	// query q = parse_query(buf);
 
 	string now = q.s;
 	reverse(now.begin(), now.end());
@@ -59,16 +90,17 @@ void handler(char* buf, int rlen, struct sockaddr_in& client_id, vector<Zone>& v
 			for (auto r: z.v) {
 				// construct_dns_header(dnshdr* h, id, false, qcnt, acnt, auth, add) 
 
-				
+
 
 			}
-			return;
+			// not found a match record
+
+			return 0;
 		}
 		// cout << now << " <-> " << zone_name << '\n';
 	}
 	// no-match
 	// forward dns query
 
-
-
+	return forward_dns(buf, rbuf, rlen, dns_server);
 }
