@@ -43,12 +43,84 @@ www, 300 , IN, A,  140.113.123.80
 
 struct Record {
 
-	string name, clss;
+	string name, clss, sufx;
+
 	int ttl, typ;
 	vector<string> data;
 
+	char b[100];
+	int len;
+
 	void clear() {
 		data.clear();
+		len = -1;
+		memset(b, 0, sizeof(b));
+	}
+
+	void fix_dot(char* c, int len) {
+		for (int i = 0; i < len; i++) {
+			int poi = i, t = 0;
+
+			while (i + 1 < len && c[i + 1] != 0 && c[i + 1] != '.') {
+				t += 1;
+				i += 1;
+			}
+			c[poi] = t;
+		}
+	}
+
+	void construct_basic() {
+		if (name.length() != 0) {
+			b[len++] = 0;
+			memcpy(b + len, name.c_str(), name.length());
+			len += name.length();
+		}
+		b[len++] = 0;
+		memcpy(b + len, sufx.c_str(), sufx.length());
+		len += sufx.length() - 1;
+
+		fix_dot(b, len);
+
+		b[len++] = 0;
+
+		unsigned short type = htons(typ);
+		memcpy(b + len, &type, sizeof(type));
+		len += sizeof(type);
+
+		unsigned short clas = htons(1);
+		memcpy(b + len, &clas, sizeof(clas));
+		len += sizeof(clas);
+
+		int t_ttl = htonl(ttl);
+		memcpy(b + len, &t_ttl, sizeof(ttl));
+		len += sizeof(ttl);
+	}
+
+	void construct() {
+		if (typ_to_str[typ] == "A") {
+			len = 0;
+
+			construct_basic();			
+
+			unsigned short d_leng = htons(4);
+			memcpy(b + len, &d_leng, sizeof(d_leng));
+			len += sizeof(t_leng);
+
+			unsigned int ip = inet_addr(data[0].c_str());
+			memcpy(b + len, &ip, sizeof(ip));
+			len += sizeof(ip);
+		}
+	}
+
+	int push(char* packet) {
+		if (len < 0) construct();
+
+		// removed after developed
+		if (len < 0) return 0;
+
+		memcpy(packet, b, len);
+
+		return len;
 	}
 };
 
@@ -68,7 +140,7 @@ struct Zone {
 		ifstream file;
 		file.open(path);
 
-		char now[2000] = {};
+		char now[201] = {};
 		char delimeter[] = ",";
 
 		file >> now; // zone name
@@ -92,18 +164,13 @@ struct Zone {
 			tmp = strtok(NULL, delimeter);
 			r.typ = str_to_typ(tmp);
 
-			// cout << r.name << ' ' << r.ttl << ' ' << r.clss << ' ' << r.typ << "\n";
-
 			tmp = strtok(NULL, "\n");
 			while (tmp) {
 				r.data.push_back(tmp);
 				tmp = strtok(NULL, "\n");
 			}
 
-			// for (auto i : r.data)
-			// 	cout << i << ' ';
-			// cout << '\n';
-
+			r.sufx = this -> name;
 			v.push_back(r);
 		}
 		file.close();

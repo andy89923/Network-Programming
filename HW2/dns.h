@@ -33,22 +33,22 @@ struct additional_record {
 	unsigned short z, data_len;
 } __attribute__((packed));
 
-void construct_dns_header(dnshdr* h, ushort id, bool isQuery, ushort qcnt, ushort acnt, ushort auth, ushort add = 1) {
+void construct_dns_header(dnshdr* h, ushort id, bool isQuery, ushort qcnt, ushort acnt, ushort auth, ushort add) {
 	h -> id    = htons(id);
 	if (isQuery)
 		h -> flags = htons(0x0120);
 	else
 		h -> flags = htons(0x8500);
 
-	// h -> qcnt  = htons(0x0001);
-	// h -> acnt  = htons(0x0000);
-	// h -> auth  = htons(0x0000);
+	h -> qcnt  = htons(qcnt);
+	h -> acnt  = htons(acnt);
+	h -> auth  = htons(auth);
 
 	// HW only, no additional record
 	h -> add   = htons(add);
 }
 
-void construct_add_rec(additional_record *ad) {
+void construct_opt_rec(additional_record *ad) {
 	ad -> name     = 0;
 	ad -> type     = htons(41);
 	ad -> udp_size = htons(4096);

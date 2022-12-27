@@ -67,7 +67,7 @@ int main(int argc, char const *argv[]) {
 		exit(1);
 	}
 	system("clear");
-	
+
 	int sock;
 	listen_port = atoi(argv[1]);
 	struct sockaddr_in server_id, client_id;
@@ -88,7 +88,8 @@ int main(int argc, char const *argv[]) {
 			break;
 		}
 
-		int flen = handler(buf, rbuf, rlen, v, dns_server);
+		int flen = handler(buf, rbuf, rlen, v, dns_server, true);
+		// int flen = handler(buf, rbuf, rlen, v, dns_server);
 
 		sendto(sock, rbuf, flen, 0, (struct sockaddr*) &client_id, csinlen);
 	}

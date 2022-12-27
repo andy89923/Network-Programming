@@ -4,13 +4,13 @@ using namespace std;
 
 bool g_debug = false;
 
-query parse_query(char* b, bool debug = false) {
+query parse_query(char* b, int& qlen) {
 	dnshdr* dns_header = (dnshdr*) b;
-
-	if (debug != g_debug) g_debug = debug;
-
+	
 	query q;
 	q.name   = (char*) (b + sizeof(dnshdr));
+	
+	qlen = (int) strlen(q.name) + 1 + 4;
 
 	memcpy(&q.qtype , b + sizeof(dnshdr) + strlen(q.name) + 1, sizeof(q.qtype));
 	memcpy(&q.qclass, b + sizeof(dnshdr) + strlen(q.name) + 1 + sizeof(q.qtype), sizeof(q.qclass));
@@ -74,33 +74,74 @@ int forward_dns(char* buf, char* rbuf, int rlen, sockaddr_in dns_server) {
 	return flen;
 }
 
-int handler(char* buf, char* rbuf, int rlen, vector<Zone>& v, sockaddr_in dns_server) {
-	query q = parse_query(buf, true);
-	// query q = parse_query(buf);
+vector<Record*> ans, aut, add;
+
+void init_handler(bool debug) {
+	if (debug != g_debug) g_debug = debug;
+
+	ans.clear();
+	aut.clear();
+	add.clear();
+}
+
+int add_records(char* c) {
+	int tot_len = 0;
+
+	for (auto i : ans) {
+		tot_len += i -> push(c + tot_len);
+	}
+	for (auto i : aut) {
+		tot_len += i -> push(c + tot_len);
+	}
+	for (auto i : add) {
+		tot_len += i -> push(c + tot_len);
+	}
+
+	return tot_len;
+}
+
+int handler(char* buf, char* rbuf, int rlen, vector<Zone>& v, sockaddr_in dns_server, bool debug=false) {
+	init_handler(debug);
+
+	int qlen;
+	query q = parse_query(buf, qlen);
 
 	string now = q.s;
 	reverse(now.begin(), now.end());
-	for (auto z: v) {
+	for (auto& z: v) {
 		string zone_name = z.name;
 		reverse(zone_name.begin(), zone_name.end());
 
 		if (strncmp(zone_name.c_str(), now.c_str(), zone_name.length()) == 0) {
+			
+			int flen = 0;
 
-			// cout << "Find match " << z.name << '\n';
-			for (auto r: z.v) {
-				// construct_dns_header(dnshdr* h, id, false, qcnt, acnt, auth, add) 
-
-
-
+			for (auto& r : z.v) if (q.qtype == r.typ) {
+				string now_r = r.name + "." + z.name;
+				if (now_r == q.s) {
+					if (g_debug) cout << "  => Found " << now_r << " <-> " << q.s << '\n';
+					
+					ans.push_back(&r);
+				}
 			}
-			// not found a match record
+			if (ans.size() == 0) aut.push_back(&z.v[0]); // SOA record
 
-			return 0;
+			dnshdr* h = (dnshdr*) rbuf;
+			dnshdr* dns_header = (dnshdr*) buf;
+			
+			construct_dns_header(h, ntohs(dns_header -> id), false, 1, ans.size(), aut.size(), add.size());
+			flen += sizeof(dnshdr);
+
+			memcpy(rbuf + flen, buf + sizeof(dnshdr), qlen);
+			flen += qlen;
+
+			flen += add_records(rbuf + flen);
+
+			return flen;
 		}
-		// cout << now << " <-> " << zone_name << '\n';
 	}
+
 	// no-match
 	// forward dns query
-
 	return forward_dns(buf, rbuf, rlen, dns_server);
 }
