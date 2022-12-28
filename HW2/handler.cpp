@@ -142,7 +142,6 @@ int handler(char* buf, char* rbuf, int rlen, vector<Zone>& v, sockaddr_in dns_se
 							add.push_back(&r);
 						}
 					}
-
 				}
 			}
 

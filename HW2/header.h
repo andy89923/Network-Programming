@@ -98,6 +98,45 @@ struct Record {
 
 	void construct() {
 		len = 0;
+		if (typ_to_str[typ] == "SOA") {
+			construct_basic();
+
+			unsigned short d_leng = 0, tmp = len;
+			len += sizeof(d_leng);
+
+			memcpy(b + len + 1, data[0].c_str(), data[0].length());
+			fix_dot(b + len, data[0].length());
+			len += data[0].length() + 1;
+			b[len - 1] = 0;
+
+			memcpy(b + len + 1, data[1].c_str(), data[1].length());
+			fix_dot(b + len, data[1].length());
+			len += data[1].length() + 1;
+			b[len - 1] = 0;
+
+			for (int k = 2; k < 7; k++) {
+				int number = stoi(data[k]);
+				number = htonl(number);
+				memcpy(b + len, &number, sizeof(int));
+				len += sizeof(int);
+			}
+			d_leng = htons(len - tmp - 2);
+			memcpy(b + tmp, &d_leng, sizeof(d_leng));
+		}
+		if (typ_to_str[typ] == "TXT") {
+			construct_basic();
+
+			char txt_len = data[0].length();
+
+			unsigned short d_leng = htons(txt_len + 1);
+			memcpy(b + len, &d_leng, sizeof(d_leng));
+			len += sizeof(d_leng);
+
+			memcpy(b + len, &txt_len, sizeof(txt_len));
+			len += sizeof(txt_len);
+			
+			memcpy(b + len, data[0].c_str(), data[0].length());
+		}
 		if (typ_to_str[typ] == "A" or typ == 28) {
 			construct_basic();			
 
