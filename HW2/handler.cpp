@@ -100,6 +100,8 @@ int add_records(char* c) {
 	return tot_len;
 }
 
+Record nip;
+
 int handler(char* buf, char* rbuf, int rlen, vector<Zone>& v, sockaddr_in dns_server, bool debug=false) {
 	init_handler(debug);
 
@@ -114,36 +116,62 @@ int handler(char* buf, char* rbuf, int rlen, vector<Zone>& v, sockaddr_in dns_se
 
 		if (strncmp(zone_name.c_str(), now.c_str(), zone_name.length()) == 0) {
 			
-			int flen = 0;
+			// check nip.io
+			string ss = q.s.substr(0, q.s.length() - zone_name.length());
 
-			for (auto& r : z.v) if (q.qtype == r.typ) {
-				string now_r = r.name + "." + z.name;
-				if (now_r == q.s) {
-					if (g_debug) cout << "  => Found " << now_r << " <-> " << q.s << '\n';
-					
-					ans.push_back(&r);
-					continue;
+			try {
+				nip.clear();
+				nip.sufx = z.name;
+
+				ss = ss.substr(0, ss.rfind('.')); nip.name = ss;
+				ss = ss.substr(0, ss.rfind('.'));
+
+				int ip;
+				int r = inet_pton(AF_INET, ss.c_str(), &ip);
+				if (r == 0) throw 1;
+
+				cout << "NIP " << ss << '\n';
+				
+				nip.typ = 1;
+				nip.ttl = 1;
+				nip.clss = "IN";
+				nip.data.push_back(ss);
+
+				ans.push_back(&nip);
+
+			} catch(const int& err) {
+
+				for (auto& r : z.v) if (q.qtype == r.typ) {
+					string now_r = r.name + "." + z.name;
+					if (now_r == q.s) {
+						if (g_debug) cout << "  => Found " << now_r << " <-> " << q.s << '\n';
+						
+						ans.push_back(&r);
+						continue;
+					}
+					if (r.name == "") ans.push_back(&r);
 				}
-				if (r.name == "") ans.push_back(&r);
-			}
-			if (ans.size() == 0) {
-				aut.push_back(&z.v[0]); // SOA record
-			} else {
-				for (auto& r : z.v) if (r.typ == 2 && q.qtype != 2) {	
-					aut.push_back(&r);
+				if (ans.size() == 0) {
+					aut.push_back(&z.v[0]); // SOA record
+				} else {
+					for (auto& r : z.v) if (r.typ == 2 && q.qtype != 2) {	
+						aut.push_back(&r);
+					}
 				}
-			}
-			if (q.qtype == 2 or q.qtype == 15) { // NS & MX
-				for (auto& r : z.v) if (r.typ == 1) {
-					for (auto i : ans) {
-						string ss = r.name + "." + z.name;
-						// cout << "-" << ss << "-  -" << (i -> data[(q.qtype == 2 ? 0 : 1)]) << "- \n";
-						if (ss == (i -> data[(q.qtype == 2 ? 0 : 1)])) {
-							add.push_back(&r);
+				if (q.qtype == 2 or q.qtype == 15) { // NS & MX
+					for (auto& r : z.v) if (r.typ == 1) {
+						for (auto i : ans) {
+							string ss = r.name + "." + z.name;
+							// cout << "-" << ss << "-  -" << (i -> data[(q.qtype == 2 ? 0 : 1)]) << "- \n";
+							if (ss == (i -> data[(q.qtype == 2 ? 0 : 1)])) {
+								add.push_back(&r);
+							}
 						}
 					}
 				}
 			}
+
+			int flen = 0;
 
 			dnshdr* h = (dnshdr*) rbuf;
 			dnshdr* dns_header = (dnshdr*) buf;

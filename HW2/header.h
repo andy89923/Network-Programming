@@ -52,6 +52,10 @@ struct Record {
 	int len;
 
 	void clear() {
+		name = "";
+		clss = "";
+		sufx = "";
+		ttl = typ = 0;
 		data.clear();
 		len = -1;
 		memset(b, 0, sizeof(b));
@@ -123,8 +127,10 @@ struct Record {
 			d_leng = htons(len - tmp - 2);
 			memcpy(b + tmp, &d_leng, sizeof(d_leng));
 		}
-		if (typ_to_str[typ] == "TXT") {
+		if (typ_to_str[typ] == "TXT" or typ_to_str[typ] == "CNAME") {
 			construct_basic();
+
+			cout << "TXT: " << data[0] << '\n';
 
 			char txt_len = data[0].length();
 
@@ -136,23 +142,29 @@ struct Record {
 			len += sizeof(txt_len);
 			
 			memcpy(b + len, data[0].c_str(), data[0].length());
+			len += data[0].length();
 		}
-		if (typ_to_str[typ] == "A" or typ == 28) {
+		if (typ_to_str[typ] == "A" or typ == 28) { // 28 -> AAAA records
 			construct_basic();			
 
-			unsigned short d_leng = htons(4);
-			memcpy(b + len, &d_leng, sizeof(d_leng));
-			len += sizeof(d_leng);
-
 			if (typ == 1) {
+				unsigned short d_leng = htons(4);
+				memcpy(b + len, &d_leng, sizeof(d_leng));
+				len += sizeof(d_leng);
+
 				unsigned int ip = inet_addr(data[0].c_str());
 				memcpy(b + len, &ip, sizeof(ip));
 				len += sizeof(ip);
 			}
-			if (typ == 28) {
-				unsigned long long ip;
+			if (typ == 28) {				
+				unsigned short d_leng = htons(16);
+				memcpy(b + len, &d_leng, sizeof(d_leng));
+				len += sizeof(d_leng);
+
+				char ip[16];
 				inet_pton(AF_INET6, data[0].c_str(), &ip);
 				memcpy(b + len, &ip, sizeof(ip));
+				
 				len += sizeof(ip);
 			}
 		}
@@ -164,12 +176,12 @@ struct Record {
 
 			b[len++] = 0;
 			memcpy(b + len, data[0].c_str(), data[0].length());
-			fix_dot(b + len - 1, data[0].length() - 1);
+			fix_dot(b + len - 1, data[0].length());
 
-			len += data[0].length() - 1;
+			len += data[0].length();
 			b[len - 1] = 0;
 
-			d_leng = data[0].length();
+			d_leng = data[0].length() + 1;
 			d_leng = htons(d_leng);
 			memcpy(b + tmp, &d_leng, sizeof(d_leng));
 		}

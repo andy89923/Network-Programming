@@ -11,5 +11,8 @@ dns: $(FILE) $(INCLUDE)
 test: dns
 	./dns 12345 ./uploads/config.txt
 
+demo: dns
+	./dns 12345 ./demo_file/config.txt
+
 clean:
 	rm -f dns

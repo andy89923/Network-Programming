@@ -1,0 +1,3 @@
+208.67.222.222
+demo1.org.,./demo_file/zone-demo1.org.txt
+demo2.org.,./demo_file/zone-demo2.org.txt
